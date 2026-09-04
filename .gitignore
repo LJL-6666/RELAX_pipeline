@@ -1,0 +1,15 @@
+﻿# 原始数据与大体量产物
+data/*
+!data/README.md
+output/
+
+.DS_Store
+Thumbs.db
+*.asv
+*.m~
+__pycache__/
+*.log
+
+**/.hg/
+**/.hgignore
+**/.hgtags
