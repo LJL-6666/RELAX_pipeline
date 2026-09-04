@@ -25,23 +25,23 @@
 ### 前置要求
 
 1. **MATLAB环境**：需要安装MATLAB（建议R2016b或更高版本）
-2. **EEGLAB工具箱**：需要安装EEGLAB（路径：`/data/liujialing/eeglab-develop`）
-3. **FieldTrip工具箱**：需要安装FieldTrip（路径：`/data/liujialing/TY/预处理/matlab/fieldtrip-20181205`）
-4. **电极位置文件**：`/data/liujialing/TY/预处理/matlab/配置环境/standard_1005.elc`
+2. **EEGLAB工具箱**：需要安装EEGLAB（路径：`<EEGLAB_ROOT>`）
+3. **FieldTrip工具箱**：需要安装FieldTrip（路径：`<FIELDTRIP_ROOT>`）
+4. **电极位置文件**：`<CAPLOC_FILE>`
 
 ### 运行方法
 
 在MATLAB中运行：
 
 ```matlab
-cd('/data/liujialing/TY/预处理/matlab/实验1/code1');
+cd('<EXPERIMENT1_ROOT>/code1');
 run('process_tongyong_bdf_to_relax_input.m');
 ```
 
 或者在命令行中运行：
 
 ```bash
-cd /data/liujialing/TY/预处理/matlab/实验1/code1
+cd <EXPERIMENT1_ROOT>/code1
 matlab -batch "run('process_tongyong_bdf_to_relax_input.m')"
 ```
 
@@ -88,15 +88,15 @@ matlab -batch "run('process_tongyong_bdf_to_relax_input.m')"
 
 ### RELAX预处理
 
-**主运行脚本**：`/data/liujialing/TY/预处理/matlab/实验1/RELAX_SET_PARAMETERS_AND_RUN.m`
+**主运行脚本**：`<EXPERIMENT1_ROOT>/RELAX_SET_PARAMETERS_AND_RUN.m`
 
 **运行命令**：
 ```bash
-cd /data/liujialing/TY/预处理/matlab/实验1
+cd <EXPERIMENT1_ROOT>
 matlab -batch "run('RELAX_SET_PARAMETERS_AND_RUN.m')"
 ```
 
-**详细使用说明**：请参考 `/data/liujialing/TY/预处理/matlab/实验1/RELAX_使用说明_Tongyong.md`
+**详细使用说明**：请参考 `<EXPERIMENT1_ROOT>/RELAX_使用说明_Tongyong.md`
 
 **注意**：脚本已自动配置了Tongyong数据集的路径，包括：
 - 输入数据路径：`data/data-tongyong/原始数据/可用原始数据/转化成set的脑电_aligned`

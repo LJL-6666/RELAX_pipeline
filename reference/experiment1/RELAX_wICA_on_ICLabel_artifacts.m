@@ -235,7 +235,7 @@ function [EEG,wIC,A,W,IC] = RELAX_wICA_on_ICLabel_artifacts(EEG,varargin) % NWB 
     % 确保ICLabel和firfilt路径已添加（ICLabel需要firfilt的windows函数）
     % 首先确保firfilt路径已添加（必须在FieldTrip之后添加，以确保firfilt的windows函数优先）
     % 优先使用项目中的Firfilt
-    FirfiltPath2 = '/data/liujialing/TY/预处理/matlab/firfilt';
+    FirfiltPath2 = '<FIRFILT_ROOT>';
     if exist(FirfiltPath2, 'dir') && exist(fullfile(FirfiltPath2, 'windows.m'), 'file')
         % 将firfilt路径添加到路径的最前面，确保优先使用
         addpath(FirfiltPath2, '-begin');
@@ -272,7 +272,7 @@ function [EEG,wIC,A,W,IC] = RELAX_wICA_on_ICLabel_artifacts(EEG,varargin) % NWB 
     % 确保ICLabel路径已添加
     if isempty(which('iclabel'))
         % 优先使用项目中的ICLabel（使用已知的固定路径）
-        ICLabelPath2 = '/data/liujialing/TY/预处理/matlab/ICLabel';
+        ICLabelPath2 = '<ICLABEL_ROOT>';
         if exist(ICLabelPath2, 'dir') && exist(fullfile(ICLabelPath2, 'iclabel.m'), 'file')
             addpath(genpath(ICLabelPath2));
             fprintf('使用项目中的ICLabel: %s\n', ICLabelPath2);

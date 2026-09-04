@@ -16,7 +16,7 @@ fprintf('=== RELAX预处理 - 交流任务 ===\n');
 fprintf('开始时间: %s\n\n', datestr(now));
 
 %% ==================== 路径配置 ====================
-base_dir = 'E:\ljl\work\通用\RELAX_update\归档\新预处理';
+base_dir = '<TASK_ROOT>';
 
 %% ==================== 依赖库配置 ====================
 fprintf('正在配置依赖库...\n');
@@ -35,7 +35,7 @@ if ~has_stats_toolbox
 end
 
 % 工具包根目录
-toolbox_dir = 'D:\APP\matlab\bao';
+toolbox_dir = '<TOOLBOX_ROOT>';
 
 % EEGLAB路径（必需）
 eeglab_path = fullfile(toolbox_dir, 'eeglab2025.1.0');

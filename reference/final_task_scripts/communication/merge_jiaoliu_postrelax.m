@@ -10,7 +10,7 @@ clear; close all; clc;
 fprintf('=== 合并RELAX结果 - 交流任务 ===\n');
 fprintf('开始时间: %s\n\n', datestr(now));
 
-base_dir = 'E:\ljl\work\通用\RELAX_update\归档\新预处理';
+base_dir = '<TASK_ROOT>';
 task_name = '交流';
 
 input_dir  = fullfile(base_dir, 'RELAX输入', task_name, 'RELAXProcessed', 'Cleaned_Data');
@@ -24,7 +24,7 @@ if ~exist(output_dir, 'dir')
 end
 
 % ===== 依赖：EEGLAB =====
-toolbox_dir = 'D:\APP\matlab\bao';
+toolbox_dir = '<TOOLBOX_ROOT>';
 eeglab_path = fullfile(toolbox_dir, 'eeglab2025.1.0');
 if ~exist(eeglab_path, 'dir')
     error('未找到EEGLAB: %s', eeglab_path);

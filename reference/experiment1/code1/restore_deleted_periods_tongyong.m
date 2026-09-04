@@ -7,7 +7,7 @@
 clear; clc;
 
 % 设置路径
-base_dir = '/data/liujialing/TY';
+base_dir = '<DATA_ROOT>';
 input_dir = fullfile(base_dir, 'data/data-tongyong/Cleaned_Data');
 output_dir = fullfile(base_dir, 'data/data-tongyong/Cleaned_Data-3');
 
@@ -18,7 +18,7 @@ end
 
 % 添加EEGLAB路径
 if ~exist('eeglab', 'file')
-    addpath('/data/liujialing/eeglab-develop');
+    addpath('<EEGLAB_ROOT>');
     eeglab('nogui');
 end
 

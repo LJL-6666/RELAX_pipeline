@@ -15,12 +15,12 @@
 clear all; close all; clc;
 
 %% ========== 路径配置 ==========
-base_dir = '/data/liujialing/TY';
+base_dir = '<DATA_ROOT>';
 input_dir = fullfile(base_dir, 'data/data-tongyong/原始数据/可用原始数据/转化成set的脑电_aligned/RELAXProcessed/Cleaned_Data');
 output_dir = fullfile(base_dir, 'data/data-tongyong/原始数据/可用原始数据/转化成set的脑电_aligned/RELAXProcessed/Cleaned_Data_Merged');
 
 % EEGLAB路径
-eeglab_path = '/data/liujialing/eeglab-develop';
+eeglab_path = '<EEGLAB_ROOT>';
 if exist(eeglab_path, 'dir')
     addpath(eeglab_path);
     try

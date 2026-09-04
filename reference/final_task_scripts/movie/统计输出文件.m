@@ -1,7 +1,7 @@
 %% 统计电影任务RELAX预处理输出文件
 clear; clc;
 
-output_dir = 'E:\ljl\work\通用\RELAX_update\归档\新预处理\RELAX输入\电影\RELAXProcessed\Cleaned_Data';
+output_dir = '<TASK_ROOT>';
 
 % 获取所有RELAX输出文件
 files = dir(fullfile(output_dir, '*_RELAX.set'));

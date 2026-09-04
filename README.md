@@ -75,13 +75,20 @@ output/
 
 ## 环境
 
-| 组件 | 位置 |
+克隆后**不必再装插件**。`setup.m` 只使用仓库内相对路径（`fileparts(mfilename('fullpath'))`）。
+
+| 组件 | 仓库位置 |
 |---|---|
-| MATLAB | R2018b+ 建议；需能跑 EEGLAB |
-| EEGLAB / FieldTrip / RELAX / MWF / ICLabel / PrepPipeline / PICARD / FastICA / Biosig | `external/` |
+| MATLAB | 本机需已安装（建议 R2018b+，能跑 EEGLAB） |
+| EEGLAB 2025.1.0（含 firfilt / dipfit / ICLabel 等 plugins） | `external/eeglab2025.1.0/` |
+| FieldTrip 20181205 | `external/fieldtrip-20181205/` |
+| RELAX v2 | `external/RELAX-RELAX-v2.0.0/` |
+| MWF / PrepPipeline / ICLabel / PICARD / FastICA / Biosig / Neuracle reader | `external/` 对应子目录 |
 | 电极 | `resources/standard_1005.elc` |
 
-`setup.m` 会 `addpath` 并做关键函数自检。
+**仍需自备：** 原始 EEG（`data/`，不入库）。没有数据时 `main` 无法端到端跑通，但依赖检查在 `setup` 即可完成。
+
+`reference/` 为历史脚本，其中本机绝对路径已替换为 `<TASK_ROOT>` 等占位符；**新数据请只跑根目录 `main.m`。**
 
 ---
 

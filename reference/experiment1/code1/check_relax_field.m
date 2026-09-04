@@ -3,11 +3,11 @@ clear; clc;
 
 % 添加EEGLAB路径
 if ~exist('eeglab', 'file')
-    addpath('/data/liujialing/eeglab-develop');
+    addpath('<EEGLAB_ROOT>');
     eeglab('nogui');
 end
 
-merged_dir = '/data/liujialing/TY/data/data-tongyong/原始数据/可用原始数据/转化成set的脑电_aligned/RELAXProcessed/Cleaned_Data_Merged';
+merged_dir = '<ALIGNED_SET_DIR>/RELAXProcessed/Cleaned_Data_Merged';
 
 fprintf('检查 sub018_RELAX_merged.set\n\n');
 EEG = pop_loadset('filename', 'sub018_RELAX_merged.set', 'filepath', merged_dir);

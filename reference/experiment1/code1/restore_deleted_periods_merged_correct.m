@@ -9,7 +9,7 @@
 clear; clc;
 
 % 设置路径
-base_dir = '/data/liujialing/TY';
+base_dir = '<DATA_ROOT>';
 single_vid_dir = fullfile(base_dir, 'data/data-tongyong/原始数据/可用原始数据/转化成set的脑电_aligned/RELAXProcessed/Cleaned_Data');
 merged_dir = fullfile(base_dir, 'data/data-tongyong/原始数据/可用原始数据/转化成set的脑电_aligned/RELAXProcessed/Cleaned_Data_Merged');
 output_dir = fullfile(base_dir, 'data/data-tongyong/原始数据/可用原始数据/转化成set的脑电_aligned/RELAXProcessed/Cleaned_Data_Merged_Restored');
@@ -21,7 +21,7 @@ end
 
 % 添加EEGLAB路径
 if ~exist('eeglab', 'file')
-    addpath('/data/liujialing/eeglab-develop');
+    addpath('<EEGLAB_ROOT>');
     eeglab('nogui');
 end
 

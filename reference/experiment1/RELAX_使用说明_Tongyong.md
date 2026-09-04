@@ -11,7 +11,7 @@
 ### 方法1：直接运行（推荐）
 
 ```bash
-cd /data/liujialing/TY/预处理/matlab/实验1
+cd <EXPERIMENT1_ROOT>
 matlab -batch "run('RELAX_SET_PARAMETERS_AND_RUN.m')"
 ```
 
@@ -22,14 +22,14 @@ matlab -batch "run('RELAX_SET_PARAMETERS_AND_RUN.m')"
 ### 方法2：在MATLAB中运行
 
 ```matlab
-cd('/data/liujialing/TY/预处理/matlab/实验1');
+cd('<EXPERIMENT1_ROOT>');
 run('RELAX_SET_PARAMETERS_AND_RUN.m');
 ```
 
 ### 方法3：使用EEGLAB GUI（交互式）
 
 ```matlab
-cd('/data/liujialing/TY/预处理/matlab/实验1');
+cd('<EXPERIMENT1_ROOT>');
 eeglab;
 % 然后在EEGLAB界面中选择：Tools > RELAX
 ```
@@ -60,10 +60,10 @@ RELAX_cfg.MergeVidFilesAfterProcessing = 1; % 1 = 自动合并, 0 = 不合并
 
 脚本已自动配置以下路径（针对Tongyong数据集）：
 
-- **EEGLAB路径**：`/data/liujialing/eeglab-develop`
-- **RELAX路径**：`/data/liujialing/TY/预处理/matlab/实验1`
-- **输入数据路径**：`/data/liujialing/TY/data/data-tongyong/原始数据/可用原始数据/转化成set的脑电_aligned`
-- **电极位置文件**：`/data/liujialing/TY/预处理/matlab/配置环境/standard_1005.elc`
+- **EEGLAB路径**：`<EEGLAB_ROOT>`
+- **RELAX路径**：`<EXPERIMENT1_ROOT>`
+- **输入数据路径**：`<ALIGNED_SET_DIR>`
+- **电极位置文件**：`<CAPLOC_FILE>`
 
 ## 需要修改的参数（根据需求调整）
 
@@ -232,7 +232,7 @@ RELAX_cfg.caploc = '/path/to/cap/file.elc';
 
 ```matlab
 % 方法1：使用提供的函数
-addpath('/data/liujialing/TY/预处理/matlab/实验1/code3');
+addpath('<EXPERIMENT1_ROOT>/code3');
 EEG_vid5 = extract_vid_from_merged_file('sub001_RELAX_merged.set', 5);
 
 % 方法2：使用EEGLAB的epoch功能

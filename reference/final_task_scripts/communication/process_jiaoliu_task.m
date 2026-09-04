@@ -25,7 +25,7 @@ fprintf('开始时间: %s\n\n', datestr(now));
 
 %% ==================== 路径配置 ====================
 % 基础目录
-base_dir = 'E:\ljl\work\通用\RELAX_update\归档\新预处理';
+base_dir = '<TASK_ROOT>';
 
 % 数据目录
 eeg_data_dir = fullfile(base_dir, '数据', '脑电');
@@ -45,7 +45,7 @@ script_dir = fullfile(base_dir, '预处理_交流任务');
 fprintf('正在配置依赖库...\n');
 
 % 工具包根目录
-toolbox_dir = 'D:\APP\matlab\bao';
+toolbox_dir = '<TOOLBOX_ROOT>';
 
 % EEGLAB路径（必需）
 eeglab_path = fullfile(toolbox_dir, 'eeglab2025.1.0');

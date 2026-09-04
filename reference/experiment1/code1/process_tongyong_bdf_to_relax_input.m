@@ -22,19 +22,19 @@
 clear all; close all; clc;
 
 %% 路径配置
-base_dir = '/data/liujialing/TY';
+base_dir = '<DATA_ROOT>';
 bdf_data_dir = fullfile(base_dir, 'data/data-tongyong/原始数据/可用原始数据/脑电');
 questionnaire_dir = fullfile(base_dir, 'data/data-tongyong/原始数据/问卷');
 output_dir = fullfile(base_dir, 'data/data-tongyong/原始数据/可用原始数据/转化成set的脑电_aligned');
 
 % EEGLAB路径
-eeglab_path = '/data/liujialing/eeglab-develop';
+eeglab_path = '<EEGLAB_ROOT>';
 if exist(eeglab_path, 'dir')
     addpath(genpath(eeglab_path));
 end
 
 % FieldTrip路径
-ft_path = '/data/liujialing/TY/预处理/matlab/fieldtrip-20181205';
+ft_path = '<FIELDTRIP_ROOT>';
 if exist(ft_path, 'dir')
     addpath(ft_path);
     addpath(fullfile(ft_path, 'fileio'));
@@ -43,7 +43,7 @@ if exist(ft_path, 'dir')
 end
 
 % 电极位置文件
-cap_file = '/data/liujialing/TY/预处理/matlab/配置环境/standard_1005.elc';
+cap_file = '<CAPLOC_FILE>';
 
 % 创建输出目录
 if ~exist(output_dir, 'dir')

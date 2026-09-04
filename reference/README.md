@@ -22,4 +22,4 @@
 
 ## 如何仅“按参考原样”跑（不推荐新数据）
 
-见 `experiment1/RELAX_使用说明_Tongyong.md`；需自行改脚本内路径，或改用根目录功能流水线。
+见 `experiment1/RELAX_使用说明_Tongyong.md`。脚本内原服务器/本机路径已脱敏为 `<DATA_ROOT>`、`<TASK_ROOT>`、`<TOOLBOX_ROOT>` 等占位符，需自行替换后才能按旧方式运行。新数据请用仓库根目录 `main.m`。

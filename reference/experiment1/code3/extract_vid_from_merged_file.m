@@ -18,7 +18,7 @@
 function EEG_segment = extract_vid_from_merged_file(merged_file, vid)
 
 % EEGLAB路径
-eeglab_path = '/data/liujialing/eeglab-develop';
+eeglab_path = '<EEGLAB_ROOT>';
 if exist(eeglab_path, 'dir')
     addpath(eeglab_path);
 end

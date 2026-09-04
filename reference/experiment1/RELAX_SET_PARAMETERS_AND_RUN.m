@@ -110,12 +110,12 @@ clear all; close all; clc;
 % MATLAB statistics and machine learning toolbox (from MATLAB website)
 
 % ========== 路径配置 - Tongyong数据集 ==========
-base_dir = '/data/liujialing/TY';
+base_dir = '<DATA_ROOT>';
 
 % EEGLAB:
 % https://sccn.ucsd.edu/eeglab/index.php
 % Delorme, A., & Makeig, S. (2004). EEGLAB: an open source toolbox for analysis of single-trial EEG dynamics including independent component analysis. Journal of neuroscience methods, 134(1), 9-21.
-eeglab_path = '/data/liujialing/eeglab-develop';
+eeglab_path = '<EEGLAB_ROOT>';
 if exist(eeglab_path, 'dir')
     addpath(eeglab_path);
     eeglab('nogui');
@@ -686,7 +686,7 @@ if RELAX_cfg.MergeVidFilesAfterProcessing == 1
         base_dir = strjoin(path_parts(1:base_dir_idx), filesep);
     else
         % 如果找不到，使用默认路径
-        base_dir = '/data/liujialing/TY';
+        base_dir = '<DATA_ROOT>';
     end
     
     % 添加合并脚本路径

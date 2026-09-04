@@ -22,14 +22,14 @@
 在MATLAB中运行：
 
 ```matlab
-cd('/data/liujialing/TY/预处理/matlab/实验1/code3');
+cd('<EXPERIMENT1_ROOT>/code3');
 run('merge_vid_files_by_subject.m');
 ```
 
 或者在命令行中运行：
 
 ```bash
-cd /data/liujialing/TY/预处理/matlab/实验1/code3
+cd <EXPERIMENT1_ROOT>/code3
 matlab -batch "run('merge_vid_files_by_subject.m')"
 ```
 

@@ -36,14 +36,14 @@
 ### 在MATLAB中运行
 
 ```matlab
-cd /data/liujialing/TY/预处理/matlab/实验1/code1
+cd <EXPERIMENT1_ROOT>/code1
 run('restore_deleted_periods_merged.m')
 ```
 
 ### 在命令行中运行
 
 ```bash
-cd /data/liujialing/TY/预处理/matlab/实验1/code1
+cd <EXPERIMENT1_ROOT>/code1
 matlab -batch "run('restore_deleted_periods_merged.m')"
 ```
 

@@ -32,14 +32,14 @@
 在MATLAB中运行：
 
 ```matlab
-cd('/data/liujialing/TY/预处理/matlab/实验1/code1/问题数据处理');
+cd('<EXPERIMENT1_ROOT>/code1/问题数据处理');
 run('merge_multiple_bdf_and_process.m');
 ```
 
 或者在命令行中运行：
 
 ```bash
-cd /data/liujialing/TY/预处理/matlab/实验1/code1/问题数据处理
+cd <EXPERIMENT1_ROOT>/code1/问题数据处理
 matlab -batch "run('merge_multiple_bdf_and_process.m')"
 ```
 

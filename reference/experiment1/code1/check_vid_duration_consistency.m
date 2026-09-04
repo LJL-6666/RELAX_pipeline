@@ -12,13 +12,13 @@
 clear; clc;
 
 % 设置路径
-base_dir = '/data/liujialing/TY';
+base_dir = '<DATA_ROOT>';
 input_dir = fullfile(base_dir, 'data/data-tongyong/原始数据/可用原始数据/转化成set的脑电_aligned/RELAXProcessed/Cleaned_Data_Merged_Restored');
 output_dir = fullfile(base_dir, '预处理/matlab/实验1/code1');
 
 % 添加EEGLAB路径
 if ~exist('eeglab', 'file')
-    addpath('/data/liujialing/eeglab-develop');
+    addpath('<EEGLAB_ROOT>');
     eeglab('nogui');
 end
 

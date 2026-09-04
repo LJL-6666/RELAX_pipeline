@@ -110,7 +110,7 @@ for FileNumber=RELAX_cfg.FilesToProcess(1,1:size(RELAX_cfg.FilesToProcess,2))
         try
             base_dir = fileparts(fileparts(fileparts(which('RELAX_Wrapper'))));
         catch
-            base_dir = '/data/liujialing/TY';
+            base_dir = '<DATA_ROOT>';
         end
         prep_path = fullfile(base_dir, '预处理/matlab/PrepPipeline');
         if exist(fullfile(prep_path, 'pop_prepPipeline.m'), 'file')
@@ -198,7 +198,7 @@ for FileNumber=RELAX_cfg.FilesToProcess(1,1:size(RELAX_cfg.FilesToProcess,2))
                     % 检查FieldTrip是否可用
                     if ~exist('ft_resampledata', 'file')
                         % 尝试添加FieldTrip路径
-                        ft_path = '/data/liujialing/TY/预处理/matlab/fieldtrip-20181205';
+                        ft_path = '<FIELDTRIP_ROOT>';
                         if exist(ft_path, 'dir')
                             addpath(ft_path);
                             addpath(fullfile(ft_path, 'preproc'));

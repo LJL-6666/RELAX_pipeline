@@ -11,7 +11,7 @@
 %   - SET文件（合并后）：转化成set的脑电_aligned/RELAXProcessed/Cleaned_Data_Merged/
 %
 % 使用方法：
-%   cd /data/liujialing/TY/预处理/matlab/实验1/code2
+%   cd <EXPERIMENT1_ROOT>/code2
 %   matlab -batch "run('process_problem_subjects_complete.m')"
 %
 % 说明：
@@ -24,10 +24,10 @@
 clear all; close all; clc;
 
 %% ========== 路径配置 ==========
-base_dir = '/data/liujialing/TY';
+base_dir = '<DATA_ROOT>';
 
 % EEGLAB路径
-eeglab_path = '/data/liujialing/eeglab-develop';
+eeglab_path = '<EEGLAB_ROOT>';
 if exist(eeglab_path, 'dir')
     addpath(eeglab_path);
     eeglab('nogui');
@@ -420,7 +420,7 @@ fprintf('========================================\n');
     if base_dir_idx > 0
         base_dir = strjoin(path_parts(1:base_dir_idx), filesep);
     else
-        base_dir = '/data/liujialing/TY';
+        base_dir = '<DATA_ROOT>';
     end
 
     % 添加合并脚本路径

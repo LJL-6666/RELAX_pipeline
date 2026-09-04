@@ -144,10 +144,10 @@ addpath('C:\Analysis_Tools\eeglab2023.0\plugins\FastICA_25\');
 addpath('C:\Analysis_Tools\eeglab2023.0\plugins\RELAX-2.0.0\');
 
 % Specify your electrode locations with the correct cap file:
-RELAX_cfg.caploc='<RELAX_ROOT>/standard_1005.elc'; % path containing electrode positions. Set to =[] if electrode locations are already in your EEG file.
+RELAX_cfg.caploc='<CAPLOC_FILE>'; % path containing electrode positions. Set to =[] if electrode locations are already in your EEG file.
 
 % Specify the to be processed file locations:
-RELAX_cfg.myPath= '<YOUR_DATA_DIR>/';
+RELAX_cfg.myPath= '<RELAX_INPUT_DIR>';
 
 % Or specify the single file to be processed:
 RELAX_cfg.filename=[]; % (including folder path)

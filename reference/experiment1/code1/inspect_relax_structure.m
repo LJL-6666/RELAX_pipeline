@@ -3,13 +3,13 @@ clear; clc;
 
 % 添加EEGLAB路径
 if ~exist('eeglab', 'file')
-    addpath('/data/liujialing/eeglab-develop');
+    addpath('<EEGLAB_ROOT>');
     eeglab('nogui');
 end
 
 % 测试文件路径
-merged_dir = '/data/liujialing/TY/data/data-tongyong/原始数据/可用原始数据/转化成set的脑电_aligned/RELAXProcessed/Cleaned_Data_Merged';
-restored_dir = '/data/liujialing/TY/data/data-tongyong/原始数据/可用原始数据/转化成set的脑电_aligned/RELAXProcessed/Cleaned_Data_Merged_Restored';
+merged_dir = '<ALIGNED_SET_DIR>/RELAXProcessed/Cleaned_Data_Merged';
+restored_dir = '<ALIGNED_SET_DIR>/RELAXProcessed/Cleaned_Data_Merged_Restored';
 
 fprintf('============================================================\n');
 fprintf('检查RELAX字段结构\n');

@@ -18,12 +18,12 @@ fprintf('=== RELAX预处理 - 交流任务（修复版）===\n');
 fprintf('开始时间: %s\n\n', datestr(now));
 
 %% ==================== 路径配置 ====================
-base_dir = 'E:\ljl\work\通用\RELAX_update\归档\新预处理';
+base_dir = '<TASK_ROOT>';
 
 %% ==================== 依赖库配置 ====================
 fprintf('正在配置依赖库...\n');
 
-toolbox_dir = 'D:\APP\matlab\bao';
+toolbox_dir = '<TOOLBOX_ROOT>';
 
 % EEGLAB
 eeglab_path = fullfile(toolbox_dir, 'eeglab2025.1.0');
@@ -108,7 +108,7 @@ fprintf('\n依赖库配置完成！\n\n');
 fprintf('配置RELAX参数...\n');
 
 % 电极位置文件
-RELAX_cfg.caploc = 'D:\APP\matlab\bao\eeglab2025.1.0\plugins\dipfit\standard_BEM\elec\standard_1005.elc';
+RELAX_cfg.caploc = '<TOOLBOX_ROOT>\eeglab2025.1.0\plugins\dipfit\standard_BEM\elec\standard_1005.elc';
 
 % 输入数据路径
 RELAX_cfg.myPath = fullfile(base_dir, 'RELAX输入', '交流');

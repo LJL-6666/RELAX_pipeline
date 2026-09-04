@@ -69,7 +69,7 @@ RELAX_epoching_cfg.BL_correction_Factor_2_Level_1={}; % triggers to include in f
 RELAX_epoching_cfg.CleanedPath=['/Volumes/黑黑/DP_academics/Data/rawdata_<=16/' filesep 'RELAXProcessed' filesep 'Cleaned_Data'];
 
 % Channels selected in epoching
-load('<RELAX_ROOT>/new_chanlocs.mat');
+load('<CHANLOCS_MAT>');
 chanlabels={new_chanlocs.labels}';
 RELAX_epoching_cfg.EpochChannels=chanlabels([1:12,15:22]);
 

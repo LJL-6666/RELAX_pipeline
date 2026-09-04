@@ -32,11 +32,11 @@ subXXX_RELAX_merged.set (每个被试一个文件)
 ### 运行命令（推荐）
 
 ```bash
-cd /data/liujialing/TY/预处理/matlab/实验1/code2
+cd <EXPERIMENT1_ROOT>/code2
 matlab -batch "run('process_problem_subjects_complete.m')"
 ```
 
-cd /data/liujialing/TY/预处理/matlab/实验1/code2
+cd <EXPERIMENT1_ROOT>/code2
 nohup matlab -nodisplay -nosplash -r "run('process_problem_subjects_complete.m'); exit" > relax_processing.log 2>&1 &
 
 
@@ -44,7 +44,7 @@ nohup matlab -nodisplay -nosplash -r "run('process_problem_subjects_complete.m')
 ### 在MATLAB中运行
 
 ```matlab
-cd('/data/liujialing/TY/预处理/matlab/实验1/code2');
+cd('<EXPERIMENT1_ROOT>/code2');
 run('process_problem_subjects_complete.m');
 ```
 
@@ -162,14 +162,14 @@ nohup matlab -batch "run('process_problem_subjects_complete.m')" > output.log 2>
 
 # 3. 所有被试的RELAX预处理
 # 方法1：分别处理
-cd /data/liujialing/TY/预处理/matlab/实验1/code2
+cd <EXPERIMENT1_ROOT>/code2
 matlab -batch "run('process_problem_subjects_complete.m')"  # 处理6个问题被试
 
-cd /data/liujialing/TY/预处理/matlab/实验1
+cd <EXPERIMENT1_ROOT>
 matlab -batch "run('RELAX_SET_PARAMETERS_AND_RUN.m')"  # 处理44个普通被试
 
 # 方法2：一次性处理（推荐）
-cd /data/liujialing/TY/预处理/matlab/实验1
+cd <EXPERIMENT1_ROOT>
 matlab -batch "run('RELAX_SET_PARAMETERS_AND_RUN.m')"  # 处理所有50个被试
 ```
 
@@ -179,8 +179,8 @@ matlab -batch "run('RELAX_SET_PARAMETERS_AND_RUN.m')"  # 处理所有50个被试
 
 ### 必需的工具箱
 
-- **EEGLAB**：`/data/liujialing/eeglab-develop`
-- **RELAX**：`/data/liujialing/TY/预处理/matlab/实验1`
+- **EEGLAB**：`<EEGLAB_ROOT>`
+- **RELAX**：`<EXPERIMENT1_ROOT>`
 
 ### 可选的插件（自动检测）
 
@@ -243,7 +243,7 @@ RELAX_cfg.files = filtered_files;
 
 检查SET文件是否已生成：
 ```bash
-ls /data/liujialing/TY/data/data-tongyong/原始数据/可用原始数据/转化成set的脑电_aligned/sub018*.set
+ls <ALIGNED_SET_DIR>/sub018*.set
 ```
 
 如果没有，需要先运行`code1/问题数据处理/merge_multiple_bdf_and_process.m`。
