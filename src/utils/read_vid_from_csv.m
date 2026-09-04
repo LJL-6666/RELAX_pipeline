@@ -1,7 +1,8 @@
-function [trial_vid_pairs, vid_list] = read_vid_from_csv(csv_file)
+function [trial_vid_pairs, vid_list] = read_vid_from_csv(csv_file, orderColumn)
 % 从CSV文件读取视频编号（vid）信息
 % 输入：
 %   csv_file: CSV文件路径
+%   orderColumn: 视频编号列名（可选；默认依次探测 videoIndex -> vid -> 第一列）
 % 输出：
 %   trial_vid_pairs: [(trial, vid)] 列表，trial从1开始（对应CSV数据行，跳过表头）
 %   vid_list: vid列表（按CSV行顺序）
@@ -19,12 +20,18 @@ try
     if exist('readtable', 'file')
         tbl = readtable(csv_file);
         
-        % 查找videoIndex列
-        if ismember('videoIndex', tbl.Properties.VariableNames)
+        % 按指定列名 -> videoIndex -> vid -> 第一列 依次探测
+        vid_col = [];
+        if nargin >= 2 && ~isempty(orderColumn) && ismember(orderColumn, tbl.Properties.VariableNames)
+            vid_col = tbl.(orderColumn);
+        elseif ismember('videoIndex', tbl.Properties.VariableNames)
             vid_col = tbl.videoIndex;
         elseif ismember('vid', tbl.Properties.VariableNames)
             vid_col = tbl.vid;
-        else
+        elseif nargin >= 2 && ~isempty(orderColumn)
+            warning('CSV 中无列 "%s"，回退使用第一列', orderColumn);
+        end
+        if isempty(vid_col)
             % 使用第一列
             vid_col = tbl{:, 1};
         end

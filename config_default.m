@@ -15,10 +15,10 @@ cfg.paths.capFile    = fullfile(cfg.paths.root, 'resources', 'standard_1005.elc'
 cfg.task.name           = 'movie';     % 输出子目录名，可改为 communication 等
 cfg.task.folderName     = '';         % 若非空，则在被试目录下再进这一层（如 '电影'/'交流'）
 cfg.task.csvPattern     = 'rating';    % 被试目录（或量表旁路）中 CSV 文件名特征
-cfg.task.orderColumn    = 'videoIndex';% 视频编号列（兼容 vid）
+cfg.task.orderColumn    = 'videoIndex';% 视频编号列名；CSV 若无此列，自动回退 vid -> 第一列
 cfg.task.subjects       = 'all';      % 'all' 或编号 cell/数值向量
 
-%% 分段 trigger（21 开始，22 结束）
+%% 分段 trigger（换数据时在这里改：默认 21 开始，22 结束）
 cfg.segment.startTrigger = 21;
 cfg.segment.endTrigger   = 22;
 
@@ -44,6 +44,18 @@ cfg.relax.InterpolateRejectedElectrodesAfterCleaning = 'yes';
 cfg.relax.ElectrodesToDelete = {};
 % 极端坏段：'delete' = 官方 eeg_eegrej；长度对齐请用 reference 中 restore 工具另做
 cfg.relax.extremeBadMode = 'delete';
+% 非任务段剔除（对齐定稿 FIXED；默认关闭，仅打开 RejNontask 时生效）
+cfg.relax.RejNontask = false;
+cfg.relax.minimum_break_length = 2000;
+cfg.relax.break_ignore_codes = setdiff(1:160, [60 61 62 63 64 65 66 67 142 143 144 145 160 200]);
+cfg.relax.break_buffer = 1500;
+
+%% 合并选项（step3；对齐定稿 merge_*_postrelax.m 的行为）
+cfg.merge.padMissingVid     = false;  % 缺 vid 时是否用 NaN 段占位（需同时设 vidRange）
+cfg.merge.vidRange          = [];     % 完整 vid 范围，如 1:28；[] = 只合并已有 vid
+cfg.merge.padDurationSec    = 30;     % 占位 NaN 段时长（秒）
+cfg.merge.addVidMarkerEvent = true;   % 每段开头加 vidXX 标记事件，便于后续按 vid 提取
+cfg.merge.method            = 'pop_mergeset'; % 'pop_mergeset' 或 'concat'（定稿手工拼接）
 
 %% 流程开关
 cfg.pipeline.doStep1 = true;

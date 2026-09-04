@@ -56,7 +56,7 @@ for i = 1:numel(subs)
         end
         fprintf('  BDF/CSV: %s | %s\n', stringify_bdf(bdfPath), csvFile);
 
-        [trial_vid_pairs, vid_list] = read_vid_from_csv(csvFile); %#ok<ASGLU>
+        [trial_vid_pairs, vid_list] = read_vid_from_csv(csvFile, cfg.task.orderColumn); %#ok<ASGLU>
         if isempty(vid_list)
             fail{end+1} = sprintf('%s: CSV 无 vid', subID); %#ok<AGROW>
             continue;
@@ -64,13 +64,15 @@ for i = 1:numel(subs)
 
         if iscell(bdfPath)
             if exist('extract_video_segments_from_multiple_bdf', 'file')
-                video_segments = extract_video_segments_from_multiple_bdf(bdfPath);
+                video_segments = extract_video_segments_from_multiple_bdf( ...
+                    bdfPath, cfg.segment.startTrigger, cfg.segment.endTrigger);
             else
                 error('多 BDF 需要 problem_data_tools/extract_video_segments_from_multiple_bdf');
             end
             primaryBdf = bdfPath{1};
         else
-            video_segments = extract_video_segments_from_bdf(bdfPath, '');
+            video_segments = extract_video_segments_from_bdf( ...
+                bdfPath, '', cfg.segment.startTrigger, cfg.segment.endTrigger);
             primaryBdf = bdfPath;
         end
         if isempty(video_segments)

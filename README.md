@@ -15,9 +15,9 @@ MATLAB 端到端 **EEG 自动去伪迹** 流水线：Neuracle BDF → 按视频�
 
 | 步骤 | 功能流水线 | 做什么 |
 |---|---|---|
-| 1 | `step1_bdf_to_set` | 读 BDF，按 trigger 21/22 切段，用 rating CSV 的 `videoIndex` 对齐，写出 `subXXX_vidYY.set` |
+| 1 | `step1_bdf_to_set` | 读 BDF，按起止 trigger（默认 21/22，可在 config 更换）切段，用 rating CSV 的 `videoIndex` 列对齐，写出 `subXXX_vidYY.set` |
 | 2 | `step2_relax_clean` | 批处理调用官方 `RELAX_Wrapper`（滤波、坏道、MWF×3、极端段处理、ICA/wICA、指标） |
-| 3 | `step3_merge_subjects` | 同被试各 vid 合并为 `subXXX_RELAX_merged.set` |
+| 3 | `step3_merge_subjects` | 同被试各 vid 合并为 `subXXX_RELAX_merged.set`（可选缺 vid NaN 占位、vid 标记事件） |
 
 默认滤波 1–47 Hz、工频 50 Hz、降采样 250 Hz；极端坏段为官方 **删除** 行为。若需等长时间轴，使用 `reference/experiment1/code1`（或 `src/utils`）中的 `restore_deleted_periods_*.m`。
 
@@ -46,6 +46,32 @@ data/<taskName>/<subID>/
 cfg.task.name = 'movie';
 cfg.task.folderName = '电影';   % 或 '交流'
 ```
+
+---
+
+## 换数据要改什么（都集中在 `config_default.m`）
+
+| 新数据的情况 | 改哪一项 | 示例 |
+|---|---|---|
+| 起止 trigger 不是 21/22 | `cfg.segment.startTrigger` / `cfg.segment.endTrigger` | 如听觉 block：`= 31; = 32;` |
+| CSV 中视频编号列不叫 `videoIndex` | `cfg.task.orderColumn` | `= 'stimID';`（若无此列自动回退 `vid` → 第一列） |
+| CSV 文件名特征不同 | `cfg.task.csvPattern` | `= 'questionnaire';` |
+| 数据在「被试/任务子文件夹」下 | `cfg.task.folderName` | `= '电影';` |
+| 只跑部分被试 | `cfg.task.subjects` | `= {'001','002'};` 或 `= [1 2];` |
+| 采样率/滤波不同 | `cfg.relax.DownSample_to_X_Hz`、`HighPassFilter`、`LowPassFilter`、`LineNoiseFrequency` | 欧标 50 Hz → 60 Hz 改 `LineNoiseFrequency = 60` |
+| 合并时要和定稿一致（缺 vid 补 NaN、保留 vid 事件） | `cfg.merge.*` | 见下 |
+| 剔除任务外长休息段 | `cfg.relax.RejNontask = true` 及 `minimum_break_length` / `break_ignore_codes` / `break_buffer` | 默认关闭 |
+
+### 合并选项（对齐定稿 `merge_*_postrelax.m`）
+
+```matlab
+cfg.merge.padMissingVid     = true;   % 缺 vid 用 NaN 段占位
+cfg.merge.vidRange          = 1:28;   % 本任务的完整 vid 范围
+cfg.merge.addVidMarkerEvent = true;   % 每段开头加 vidXX 事件（后续可再按 vid 提取）
+cfg.merge.method            = 'concat'; % 定稿脚本的手工拼接方式
+```
+
+默认（`padMissingVid=false`, `method='pop_mergeset'`）为「有啥合啥」的 EEGLAB 合并，适合 vid 齐全的数据。
 
 ### 输出
 
