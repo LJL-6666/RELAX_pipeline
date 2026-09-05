@@ -127,6 +127,8 @@ output/
 
 **仍需自备：** 原始 EEG（`data/`，不入库）。没有数据时 `main` 无法端到端跑通，但依赖检查在 `setup` 即可完成。
 
+本地冒烟（可选）：准备 `data/smoke/<subID>/` 后运行 `smoke_test`（step1 全量 + step2 仅 2 个文件 + step3）。若 step1 已完成可只跑 `smoke_continue_step23`。
+
 `reference/` 为历史脚本，其中本机绝对路径已替换为 `<TASK_ROOT>` 等占位符；**新数据请只跑根目录 `main.m`。**
 
 ---

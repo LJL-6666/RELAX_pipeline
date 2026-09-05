@@ -50,6 +50,7 @@ cfg.relax.InterpolateRejectedElectrodesAfterCleaning = 'yes';
 cfg.relax.ElectrodesToDelete = {};
 % 极端坏段：'delete' = 官方 eeg_eegrej；长度对齐请用 reference 中 restore 工具另做
 cfg.relax.extremeBadMode = 'delete';
+cfg.relax.RestoreDeletedPeriodsAsNaN = 0; % 0=官方删除后直接保存；1=Wrapper 内尝试 NaN 填回（不推荐，易因长度不一致失败）
 % 非任务段剔除（对齐定稿 FIXED；默认关闭，仅打开 RejNontask 时生效）
 cfg.relax.RejNontask = false;
 cfg.relax.minimum_break_length = 2000;

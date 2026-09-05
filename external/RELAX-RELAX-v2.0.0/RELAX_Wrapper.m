@@ -692,7 +692,11 @@ for FileNumber=RELAX_cfg.FilesToProcess(1,1:size(RELAX_cfg.FilesToProcess,2))
         [continuousEEG, ~] = RELAX_metrics_blinks(continuousEEG, epochedEEG);
         [continuousEEG, ~] = RELAX_metrics_muscle(continuousEEG, epochedEEG, RELAX_cfg);
 
-        [continuousEEG] = RELAX_metrics_final_SER_and_ARR(rawEEG, continuousEEG); % this is only a good metric for testing only the cleaning of artifacts marked for cleaning by MWF, see notes in function.
+        try
+            [continuousEEG] = RELAX_metrics_final_SER_and_ARR(rawEEG, continuousEEG); % this is only a good metric for testing only the cleaning of artifacts marked for cleaning by MWF, see notes in function.
+        catch ME
+            warning('RELAX_metrics_final_SER_and_ARR failed (continue to save cleaned file): %s', ME.message);
+        end
 
         EEG=continuousEEG;
         EEG = rmfield(EEG,'RELAXProcessing');
@@ -790,45 +794,44 @@ for FileNumber=RELAX_cfg.FilesToProcess(1,1:size(RELAX_cfg.FilesToProcess,2))
     SaveSet_CleanedFile =[RELAX_cfg.myPath,filesep 'RELAXProcessed' filesep 'Cleaned_Data', filesep FileName '_RELAX.set'];  
     EEG.RELAX_settings_used_to_clean_this_file=RELAX_cfg;
 
-    %% 在保存前，用NaN填充被删除的坏段，恢复到原始长度
-    if isfield(EEG.RELAX, 'BadPeriodsBeforeDeletion') && ~isempty(EEG.RELAX.BadPeriodsBeforeDeletion)
-        fprintf('  恢复原始数据长度并用NaN填充 %d 个坏段位置\n', size(EEG.RELAX.BadPeriodsBeforeDeletion, 1));
-        
-        % 当前数据长度
-        current_length = size(EEG.data, 2);
-        original_length = EEG.RELAX.OriginalDataLength;
-        
-        % 创建新的数据矩阵，长度为原始长度
-        restored_data = zeros(size(EEG.data, 1), original_length);
-        
-        % 计算删除后剩余数据应该放置的位置
-        bad_periods = EEG.RELAX.BadPeriodsBeforeDeletion;
-        
-        % 标记所有坏段位置为1
-        is_bad = false(1, original_length);
-        for i = 1:size(bad_periods, 1)
-            is_bad(bad_periods(i,1):bad_periods(i,2)) = true;
+    %% Optional: restore deleted extreme periods as NaN (OFF by default = official delete)
+    % 官方 RELAX 删除极端坏段后直接保存。等长 NaN 还原默认关闭，避免长度不一致时崩溃；
+    % 需要时设 RELAX_cfg.RestoreDeletedPeriodsAsNaN = 1，或事后用 restore_deleted_periods_*.m。
+    if ~isfield(RELAX_cfg, 'RestoreDeletedPeriodsAsNaN') || isempty(RELAX_cfg.RestoreDeletedPeriodsAsNaN)
+        RELAX_cfg.RestoreDeletedPeriodsAsNaN = 0;
+    end
+    if RELAX_cfg.RestoreDeletedPeriodsAsNaN == 1 ...
+            && isfield(EEG.RELAX, 'BadPeriodsBeforeDeletion') && ~isempty(EEG.RELAX.BadPeriodsBeforeDeletion) ...
+            && isfield(EEG.RELAX, 'OriginalDataLength') && ~isempty(EEG.RELAX.OriginalDataLength)
+        try
+            current_length = size(EEG.data, 2);
+            original_length = EEG.RELAX.OriginalDataLength;
+            bad_periods = EEG.RELAX.BadPeriodsBeforeDeletion;
+            is_bad = false(1, original_length);
+            for i = 1:size(bad_periods, 1)
+                a = max(1, bad_periods(i,1));
+                b = min(original_length, bad_periods(i,2));
+                if a <= b
+                    is_bad(a:b) = true;
+                end
+            end
+            good_indices = find(~is_bad);
+            if length(good_indices) == current_length
+                restored_data = nan(size(EEG.data, 1), original_length);
+                restored_data(:, good_indices) = EEG.data;
+                EEG.data = restored_data;
+                EEG.pnts = original_length;
+                EEG.xmax = (original_length - 1) / EEG.srate;
+                EEG.times = (0:original_length-1) / EEG.srate * 1000;
+                fprintf('  已将 %d 个坏段还原为 NaN（长度 %d -> %d）\n', ...
+                    size(bad_periods, 1), current_length, original_length);
+            else
+                warning('跳过 NaN 还原：好段索引数(%d)与当前点数(%d)不一致', ...
+                    length(good_indices), current_length);
+            end
+        catch ME
+            warning('NaN 还原失败，仍保存删除后的数据: %s', ME.message);
         end
-        
-        % 将清理后的数据放回到非坏段位置
-        good_indices = find(~is_bad);
-        if length(good_indices) == current_length
-            restored_data(:, good_indices) = EEG.data;
-        else
-            warning('数据长度不匹配！期望 %d，实际 %d', length(good_indices), current_length);
-        end
-        
-        % 坏段位置填充NaN
-        bad_indices = find(is_bad);
-        restored_data(:, bad_indices) = NaN;
-        
-        % 更新EEG数据和时间点数
-        EEG.data = restored_data;
-        EEG.pnts = original_length;
-        EEG.xmax = (original_length - 1) / EEG.srate;
-        EEG.times = (0:original_length-1) / EEG.srate * 1000;  % 毫秒
-        
-        fprintf('  数据长度已从 %d 恢复到 %d（坏段用NaN标记）\n', current_length, original_length);
     end
     
     EEG = pop_saveset( EEG, SaveSet_CleanedFile ); 

@@ -118,8 +118,14 @@ RELAX_cfg.PlotAfterMwf3 = false;
 RELAX_cfg.PlotAfterwICA = false;
 
 RELAX_cfg.FilesToProcess = 1:numel(RELAX_cfg.files);
+if isfield(cfg.relax, 'RestoreDeletedPeriodsAsNaN')
+    RELAX_cfg.RestoreDeletedPeriodsAsNaN = cfg.relax.RestoreDeletedPeriodsAsNaN;
+else
+    RELAX_cfg.RestoreDeletedPeriodsAsNaN = 0;
+end
 fprintf('[step2] 批处理 %d 个文件（官方 RELAX_Wrapper）...\n', numel(RELAX_cfg.files));
-fprintf('[step2] extremeBadMode=%s（功能流水线默认 delete=官方行为）\n', cfg.relax.extremeBadMode);
+fprintf('[step2] extremeBadMode=%s RestoreDeletedPeriodsAsNaN=%d\n', ...
+    cfg.relax.extremeBadMode, RELAX_cfg.RestoreDeletedPeriodsAsNaN);
 
 [RELAX_cfg, FileNumber, CleanedMetrics, RawMetrics, ...
     RELAXProcessingRoundOneAllParticipants, RELAXProcessingRoundTwoAllParticipants, ...
