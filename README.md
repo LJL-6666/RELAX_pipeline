@@ -54,6 +54,7 @@ cfg.task.folderName = '电影';   % 或 '交流'
 | 新数据的情况 | 改哪一项 | 示例 |
 |---|---|---|
 | 起止 trigger 不是 21/22 | `cfg.segment.startTrigger` / `cfg.segment.endTrigger` | 如听觉 block：`= 31; = 32;` |
+| 多 BDF（data.bdf + data.1.bdf…） | 自动处理；有 `evt.bdf` 优先用 | 见下「多 BDF」 |
 | CSV 中视频编号列不叫 `videoIndex` | `cfg.task.orderColumn` | `= 'stimID';`（若无此列自动回退 `vid` → 第一列） |
 | CSV 文件名特征不同 | `cfg.task.csvPattern` | `= 'questionnaire';` |
 | 数据在「被试/任务子文件夹」下 | `cfg.task.folderName` | `= '电影';` |
@@ -72,6 +73,18 @@ cfg.merge.method            = 'concat'; % 定稿脚本的手工拼接方式
 ```
 
 默认（`padMissingVid=false`, `method='pop_mergeset'`）为「有啥合啥」的 EEGLAB 合并，适合 vid 齐全的数据。
+
+### 多 BDF（`data.bdf` / `data.1.bdf` / …）
+
+采集被拆成多个文件时，step1 会：
+
+1. 按 `data.bdf → data.1.bdf → data.2.bdf` 排序拼接（FieldTrip cell 合并）  
+2. **优先读同目录 `evt.bdf` 的整段绝对时间事件**（避免分文件 T0 / interval 乱）  
+3. **删除** `Start Impedance` / `Stop Impedance` 等分界标记后继续，**不因此拒被试**  
+4. 默认 `21` 后紧跟 `22` 配对；若数量不一致或配对为空，自动以 `22` 为锚点向前取 `endAnchorDurationSec` 秒  
+5. 写出 `.set` 时用多文件对齐函数，**不会只读第一个 data.bdf**
+
+相关开关在 `cfg.segment`（`preferEvtBdf` / `stripImpedance` / `pairMode` / `fallbackToEndAnchor` / `endAnchorDurationSec`）。
 
 ### 输出
 

@@ -21,6 +21,12 @@ cfg.task.subjects       = 'all';      % 'all' 或编号 cell/数值向量
 %% 分段 trigger（换数据时在这里改：默认 21 开始，22 结束）
 cfg.segment.startTrigger = 21;
 cfg.segment.endTrigger   = 22;
+% 多 BDF / 事件稳健性（对齐 multi-bdf 预处理经验）
+cfg.segment.preferEvtBdf = true;          % 有 evt.bdf 时优先用其绝对时间事件（避免分文件 T0 乱）
+cfg.segment.stripImpedance = true;        % 删除 Start/Stop Impedance 后继续，不因此拒被试
+cfg.segment.pairMode = 'adjacent';        % 'adjacent'=21后紧跟22；'end_anchor'=以22向前取固定时长
+cfg.segment.fallbackToEndAnchor = true;   % 21/22 数量不一致或配对为空时，自动回退 end_anchor
+cfg.segment.endAnchorDurationSec = 30;    % end_anchor 向前取的秒数（需与任务段时长匹配）
 
 %% RELAX 清洁参数（对齐定稿 FIXED 脚本）
 cfg.relax.HighPassFilter = 1;
