@@ -97,6 +97,68 @@ output/
 
 ---
 
+## 先切再清洁 vs 先清洁再切：结果影响大吗？
+
+本仓库**默认是 A：先按 vid 切开，再对每个短连续段跑 RELAX**（与定稿 `*_FIXED.m` 一致）。  
+论文更贴近的是 **B：整场连续清洁，再按事件切段**（本仓尚未作为第二模式实现）。
+
+| | A 先切再清洁（默认） | B 先清洁再切（论文更贴近） |
+|---|---|---|
+| 清洁上下文 | 单个 vid（短） | 整场（长） |
+| 伪迹模型 | 各段独立 | 整场共享 |
+| MWF / ICA | 短段可能略不稳 | 通常更充分 |
+| 刺激隔离 | 强 | 弱（可能互相影响） |
+| 与定稿 / 当前仓 | 一致 | 需另做模式 |
+
+**结果影响会不会大？**  
+会有差别，有时还不小：同一被试同一视频，波形、删段后长度、眨眼/肌电残留、SER/ARR 都可以不同。  
+差别大小取决于数据长短、伪迹多少、ICA 是否充分——**不能假定两种预处理可互换**；发文章应固定一种并写清。若要量化，需对同一批数据跑 A/B 对照（看 SER/ARR、眨眼比、下游 TRF/ERP）。
+
+---
+
+## 清洁前后比对指标（RELAX 自动产出）
+
+step2 在 `output/relax/<task>/RELAXProcessed/` 写出（并嵌入每个 `*_RELAX.set`）：
+
+### 最常用的前后对比
+
+| 指标 | 含义 | 怎么看 |
+|---|---|---|
+| **All_SER**（Signal to Error Ratio） | 信号相对误差 | 清洁后越高越好（保留神经信号） |
+| **All_ARR**（Artifact to Residue Ratio） | 伪迹相对残留 | 清洁后越高越好（伪迹清得干净） |
+| **BlinkAmplitudeRatio** | 眨眼相关幅度比 | Raw vs Cleaned；清洁后应下降 |
+| **MeanMuscleStrength…** | 超阈值肌电强度 | Raw vs Cleaned；清洁后应下降 |
+| **ProportionOfEpochsShowingMuscle…** | 肌电污染 epoch 比例 | Raw vs Cleaned；清洁后应下降 |
+
+汇总文件：
+
+- `RawMetrics.mat` — 清洁前  
+- `CleanedMetrics.mat` — 清洁后  
+
+单文件内：
+
+```matlab
+EEG = pop_loadset('sub001_vid01_RELAX.set', '...');
+EEG.RELAX_Metrics.Raw.*       % 清洁前
+EEG.RELAX_Metrics.Cleaned.*   % 清洁后（含 All_SER / All_ARR 等）
+```
+
+### 其它质控（不是简单「前后一对数字」，但很重要）
+
+| 文件 / 字段 | 内容 |
+|---|---|
+| `RELAX_issues_to_check.mat` | 删极过多、未检出眨眼、MWF 秩亏、数据可能太短做 ICA 等 |
+| `RELAXProcessingExtremeRejectionsAllParticipants.mat` | 极端坏段 / 坏道拒绝统计 |
+| `ProcessingStatisticsRoundOne/Two/Three.mat` | 各轮 MWF |
+| `ProcessingStatistics_wICA.mat` | wICA / ICLabel 相关 |
+| `RELAX_cfg.mat` | 本次完整参数 |
+
+更细的字段说明见 [`reference/docs/RELAX输出指标清单.md`](reference/docs/RELAX输出指标清单.md)。
+
+**注意：** 个别文件在算 SER/ARR 时可能失败（会警告但**仍保存**清洁 `.set`）。此时 `All_SER` / `All_ARR` 可能缺失，可看眨眼/肌电指标与 `RELAX_issues_to_check`。开关：`cfg.relax.computerawmetrics` / `computecleanedmetrics`（默认均为 1）。
+
+---
+
 ## 原始参考怎么用
 
 见 [`reference/README.md`](reference/README.md)。
@@ -153,6 +215,12 @@ A: `reference` 便于文献级对照与实验1 脚本共存；`external` 供功�
 
 **Q: 极端段 NaN 文档与官方删除不一致？**  
 A: 功能流水线默认官方删除。等长需求用 restore 工具显式处理，避免静默改算法。
+
+**Q: 先切再清洁和论文推荐的先清洁再切，结果差很多吗？**  
+A: 可能有实质差别（见上文对照表）。默认 A 为与定稿一致；论文更贴近 B。两者不要混用后直接比下游结果。
+
+**Q: 清洁有没有前后对比指标？**  
+A: 有。优先看 `RawMetrics` / `CleanedMetrics` 里的 SER、ARR、眨眼比、肌电指标；详见上文「清洁前后比对指标」。
 
 ---
 
