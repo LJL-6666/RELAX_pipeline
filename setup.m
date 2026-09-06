@@ -36,6 +36,13 @@ if exist(biosig, 'dir') == 7
 end
 add_if_exists(fullfile(ext, 'NeuracleEEGFileReader1.2'));
 
+%% ERPLAB（可选；RejCrap / RejNontask 需要 pop_continuousartdet 等）
+erplab = fullfile(ext, 'erplab12.20');
+if exist(erplab, 'dir') == 7
+    addpath(fullfile(erplab, 'pop_functions'));
+    addpath(fullfile(erplab, 'functions'));
+end
+
 %% 本项目
 addpath(fullfile(root, 'src'));
 addpath(fullfile(root, 'src', 'utils'));

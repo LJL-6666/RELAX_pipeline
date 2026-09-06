@@ -30,11 +30,22 @@ end
 output_dir = fullfile(cfg.paths.outputRoot, 'epochs_by_vid', cfg.task.name);
 if ~exist(output_dir, 'dir'), mkdir(output_dir); end
 
-% 是否剔除坏段（默认 true）
-rejectBad = true;
-if isfield(cfg.pipeline, 'modeB_rejectBadEpochs')
-    rejectBad = cfg.pipeline.modeB_rejectBadEpochs;
+% 坏段处理方式（三档）：
+%   'reject' = 与 BAD_segment 重叠的试次整段剔除（默认）
+%   'keep'   = 整段保留，打 BAD_segment_overlap 标记
+%   'trim'   = 与 MD 参考实现一致：eeg_eegrej 只删坏段区间（段会变短，跨被试长度不一）
+badHandling = 'reject';
+if isfield(cfg.pipeline, 'modeB_badSegmentHandling') && ~isempty(cfg.pipeline.modeB_badSegmentHandling)
+    badHandling = cfg.pipeline.modeB_badSegmentHandling;
+elseif isfield(cfg.pipeline, 'modeB_rejectBadEpochs')
+    % 旧开关向后兼容：true->reject, false->keep
+    if cfg.pipeline.modeB_rejectBadEpochs
+        badHandling = 'reject';
+    else
+        badHandling = 'keep';
+    end
 end
+fprintf('[step3b] 坏段处理方式: %s\n', badHandling);
 
 all_files = dir(fullfile(input_dir, 'sub*_whole_RELAX.set'));
 if isempty(all_files)
@@ -126,13 +137,14 @@ for f = 1:numel(all_files)
         % 5. 逐段提取并写出
         nWritten = 0;
         nRejected = 0;
+        nTrimmed = 0;
         for i = 1:numel(video_segments)
             seg = video_segments(i);
             vid = trial_vid_pairs(i, 2);
 
             % 检查是否与 BAD_segment 重叠
             isBad = segment_overlaps_bad(seg.startSample, seg.endSample, bad_periods);
-            if isBad && rejectBad
+            if isBad && strcmp(badHandling, 'reject')
                 fprintf('  vid%02d: 与 BAD_segment 重叠，剔除\n', vid);
                 nRejected = nRejected + 1;
                 continue;
@@ -156,8 +168,29 @@ for f = 1:numel(all_files)
             EEG_seg.event(1).duration = 0;
             EEG_seg.event(1).videoIndex = vid;
 
-            % 若该段与 BAD_segment 重叠但不剔除，则标记
-            if isBad
+            EEG_seg = eeg_checkset(EEG_seg);
+
+            if isBad && strcmp(badHandling, 'trim')
+                % MD 参考实现方式：只删除段内与 BAD_segment 重叠的区间
+                % （eeg_eegrej 会自动调整事件 latency；段长度因此变短）
+                rel = [];
+                for b = 1:size(bad_periods, 1)
+                    a = max(bad_periods(b, 1), seg.startSample) - seg.startSample + 1;
+                    b2 = min(bad_periods(b, 2), seg.endSample) - seg.startSample + 1;
+                    if a <= b2
+                        rel(end+1, :) = [a, b2]; %#ok<AGROW>
+                    end
+                end
+                if ~isempty(rel)
+                    EEG_seg.etc.modeB_trimmed_periods = rel; % 段内相对坐标（删除前）
+                    EEG_seg.etc.modeB_trimmed_total_sec = sum(rel(:,2) - rel(:,1) + 1) / fs;
+                    EEG_seg = eeg_eegrej(EEG_seg, rel);
+                    fprintf('  vid%02d: trim 掉 %d 个坏段区间（共 %.2f s），剩余 %.2f s\n', ...
+                        vid, size(rel, 1), EEG_seg.etc.modeB_trimmed_total_sec, EEG_seg.xmax);
+                    nTrimmed = nTrimmed + 1;
+                end
+            elseif isBad
+                % keep：整段保留，打标记
                 EEG_seg.event(end+1).type = 'BAD_segment_overlap';
                 EEG_seg.event(end).latency = 1;
                 EEG_seg.event(end).duration = 0;
@@ -168,7 +201,7 @@ for f = 1:numel(all_files)
             pop_saveset(EEG_seg, 'filename', outFile, 'filepath', output_dir);
             nWritten = nWritten + 1;
         end
-        fprintf('  写出 %d 个 set（剔除 %d 个坏段）\n', nWritten, nRejected);
+        fprintf('  写出 %d 个 set（剔除 %d 个，trim %d 个）\n', nWritten, nRejected, nTrimmed);
         ok = ok + 1;
     catch ME
         warning('[step3b] %s 失败: %s', subStr, ME.message);

@@ -112,6 +112,41 @@ function [continuousEEG, epochedEEG] = RELAX_excluding_channels_and_epoching(con
     epochedEEG = pop_epoch( epochedEEG, {'X'}, [0 1.0], 'epochinfo', 'yes');
     epochedEEG = eeg_checkset( epochedEEG );
     epochedEEG = pop_selectevent( epochedEEG, 'type', 'X', 'omitlatency', '1<=1999', 'deleteevents','on'); 
+
+    % Mode B (mark-only) addition: exclude epochs overlapping CRAP-marked
+    % periods from all subsequent robust statistics (bad channel and
+    % extreme value detection). This mirrors the reference
+    % implementation's is_crap_epoch approach: CRAP data must not
+    % contaminate median/MAD thresholds, kurtosis, jointprob, drift or
+    % muscle slope stats. CRAP periods stay NaN in the NaNsForNonEvents
+    % mask (so MWF templates ignore them) and are merged into the
+    % deletion list later by RELAX_Wrapper.
+    if isfield(continuousEEG, 'RELAX') && isfield(continuousEEG.RELAX, 'CRAPwinMarked') ...
+            && ~isempty(continuousEEG.RELAX.CRAPwinMarked)
+        crap = continuousEEG.RELAX.CRAPwinMarked;
+        oneSec = round(1000/RELAX_cfg.ms_per_sample);
+        crapEpochs = [];
+        for e = 1:size(epochedEEG.event,2)
+            if strcmp(epochedEEG.event(e).type, 'X') && isfield(epochedEEG.event(e), 'originallatency') ...
+                    && ~isempty(epochedEEG.event(e).originallatency)
+                a = epochedEEG.event(e).originallatency;
+                b = a + oneSec - 1;
+                if any(crap(:,1) <= b & crap(:,2) >= a)
+                    if isfield(epochedEEG.event(e), 'epoch') && ~isempty(epochedEEG.event(e).epoch)
+                        crapEpochs(end+1) = epochedEEG.event(e).epoch; %#ok<AGROW>
+                    end
+                end
+            end
+        end
+        crapEpochs = unique(crapEpochs);
+        if ~isempty(crapEpochs) && numel(crapEpochs) < epochedEEG.trials
+            epochedEEG = pop_select(epochedEEG, 'notrial', crapEpochs);
+            epochedEEG = eeg_checkset(epochedEEG);
+            fprintf('  [Mode B] %d 个与 CRAP 重叠的 epoch 已排除出坏导/极端值统计\n', numel(crapEpochs));
+        elseif ~isempty(crapEpochs)
+            warning('[Mode B] 所有 epoch 均与 CRAP 重叠，跳过排除（否则无数据可统计）');
+        end
+    end
     % Insert 0's into the masking template for all periods except the first
     % and last 5s of the data:
     for e=1:size(epochedEEG.event,2)

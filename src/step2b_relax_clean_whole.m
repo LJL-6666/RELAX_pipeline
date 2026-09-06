@@ -106,7 +106,15 @@ RELAX_cfg.RejNontask = cfg.relax.RejNontask;
 RELAX_cfg.minimum_break_length = cfg.relax.minimum_break_length;
 RELAX_cfg.break_ignore_codes = cfg.relax.break_ignore_codes;
 RELAX_cfg.break_buffer = cfg.relax.break_buffer;
-RELAX_cfg.RejCrap = false;
+RELAX_cfg.RejCrap = cfg.relax.RejCrap;
+if RELAX_cfg.RejCrap
+    RELAX_cfg.AR_parameters = table( ...
+        {cfg.relax.crapChannels}, cfg.relax.crapThreshold, ...
+        cfg.relax.crapWindowSize, cfg.relax.crapWindowStep, ...
+        'VariableNames', {'Channels', 'Threshold', 'Window_Size', 'Window_Step'});
+    RELAX_cfg.reject_short_periods = cfg.relax.reject_short_periods;
+    RELAX_cfg.crapNumChanThreshold = cfg.relax.crapNumChanThreshold;
+end
 RELAX_cfg.BlinkDetectThreshould = 1.5;
 RELAX_cfg.PlotCRAPRejection = false;
 RELAX_cfg.PlotAfterExtremeRejection = false;

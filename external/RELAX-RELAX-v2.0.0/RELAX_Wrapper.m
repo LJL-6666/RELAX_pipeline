@@ -205,13 +205,42 @@ for FileNumber=RELAX_cfg.FilesToProcess(1,1:size(RELAX_cfg.FilesToProcess,2))
     if RELAX_cfg.RejCrap
         EEG.RELAXProcessingExtremeRejections.CRAPratio=[];
 
-        channels = str2num(char(RELAX_cfg.AR_parameters{1,'Channels'})); % List of channels
+        % 同时超过阈值的通道数门槛（官方硬编码 6；可配置）
+        if isfield(RELAX_cfg, 'crapNumChanThreshold') && ~isempty(RELAX_cfg.crapNumChanThreshold)
+            numChanThreshold = RELAX_cfg.crapNumChanThreshold;
+        else
+            numChanThreshold = 6;
+        end
+
+        channelsRaw = RELAX_cfg.AR_parameters{1,'Channels'};
+        if iscell(channelsRaw) && numel(channelsRaw) == 1
+            channelsRaw = channelsRaw{1}; % table 花括号索引可能返回 cell，先解包
+        end
+        if (ischar(channelsRaw) || isstring(channelsRaw)) && strcmpi(strtrim(char(channelsRaw)), 'all')
+            channels = 1:EEG.nbchan; % 'all' = 全部通道
+        else
+            channels = str2num(char(channelsRaw)); %#ok<ST2NM> % List of channels
+        end
+        if isempty(channels)
+            error('RELAX:CRAPChannels', 'CRAP 通道列表解析为空（AR_parameters.Channels = %s），请检查配置', char(string(channelsRaw)));
+        end
         threshold = RELAX_cfg.AR_parameters{1,'Threshold'};
         window_size = RELAX_cfg.AR_parameters{1,'Window_Size'};
         window_step = RELAX_cfg.AR_parameters{1,'Window_Step'};
-        EEG = pop_continuousartdet(EEG , 'ampth',  threshold, 'chanArray',  channels, ...
-            'shortisi',  RELAX_cfg.reject_short_periods, 'winms',  window_size, 'stepms',  window_step, ...
-            'threshType', 'peak-to-peak' ,'numChanThreshold',6,'firstdet','off');
+        % 直接调用 ERPLAB 底层 basicrap 获取 CRAP 窗口（不删除数据）。
+        % 新版 ERPLAB 的 pop_continuousartdet 在 script 模式下会直接 eeg_eegrej
+        % 删除且不再写 EEG.CRAPwin；RELAX 需要自己掌控删除时机（Mode B 下只标记），
+        % 因此这里只取窗口，删除/标记由下方 RELAX 逻辑决定。
+        [WinRej, chanrej] = basicrap(EEG, channels, threshold, window_size, window_step, ...
+            0, [], [], 'peak-to-peak', numChanThreshold); % firstdet=0（对应 pop 层的 'off'）
+        if ~isempty(WinRej)
+            shortisisam = floor(RELAX_cfg.reject_short_periods * EEG.srate/1000);
+            [WinRej, ~] = joinclosesegments(WinRej, chanrej, shortisisam);
+            fprintf('\n %g CRAP segments were marked.\n\n', size(WinRej,1));
+        else
+            fprintf('\n CRAP criterion was not found. No rejection was performed.\n');
+        end
+        EEG.CRAPwin = WinRej;
 
         % Display CRAP area
         if RELAX_cfg.PlotCRAPRejection
@@ -357,7 +386,15 @@ for FileNumber=RELAX_cfg.FilesToProcess(1,1:size(RELAX_cfg.FilesToProcess,2))
     end
 
     % Record extreme artifact rejection details for all participants in single table:
-    RELAXProcessingExtremeRejectionsAllParticipants(FileNumber,:) = struct2table(epochedEEG.RELAXProcessingExtremeRejections,'AsArray',true);
+    newExtremeRow = struct2table(epochedEEG.RELAXProcessingExtremeRejections,'AsArray',true);
+    if exist('RELAXProcessingExtremeRejectionsAllParticipants', 'var') ...
+            && istable(RELAXProcessingExtremeRejectionsAllParticipants) ...
+            && ~isequal(RELAXProcessingExtremeRejectionsAllParticipants.Properties.VariableNames, newExtremeRow.Properties.VariableNames)
+        % 配置变化（如 RejCrap 开关）导致字段数与续跑加载的旧表不一致时，重建汇总表
+        warning('RELAXProcessingExtremeRejectionsAllParticipants 字段与当前配置不一致，重建汇总表（旧表内容丢弃）');
+        clear RELAXProcessingExtremeRejectionsAllParticipants
+    end
+    RELAXProcessingExtremeRejectionsAllParticipants(FileNumber,:) = newExtremeRow;
 
     rawEEG=continuousEEG; % Take a copy of the not yet cleaned data for calculation of all cleaning SER and ARR at the end
 

@@ -69,22 +69,31 @@ cfg.task.folderName = '电影';   % 或 '交流'
 | 只跑部分被试 | `cfg.task.subjects` | `= {'001','002'};` 或 `= [1 2];` |
 | 采样率/滤波不同 | `cfg.relax.DownSample_to_X_Hz`、`HighPassFilter`、`LowPassFilter`、`LineNoiseFrequency` | 欧标 50 Hz → 60 Hz 改 `LineNoiseFrequency = 60` |
 | 合并时要和定稿一致（缺 vid 补 NaN、保留 vid 事件） | `cfg.merge.*` | 见下 |
-| 剔除任务外长休息段 | `cfg.relax.RejNontask = true` 及 `minimum_break_length` / `break_ignore_codes` / `break_buffer` | 默认关闭 |
+| 剔除任务外长休息段 | `cfg.relax.RejNontask = true` 及 `minimum_break_length` / `break_ignore_codes` / `break_buffer` | 默认关闭；需 ERPLAB |
+| 启用 CRAP 连续伪迹检测 | `cfg.relax.RejCrap = true` 及 `crapThreshold` / `crapWindowSize` / `crapWindowStep` / `crapNumChanThreshold` | 默认关闭（对齐定稿 FIXED）；需 ERPLAB；Mode A 物理删除，Mode B 标记合并 |
 | 启用整段清洁模式（Mode B） | `cfg.pipeline.cleanThenSegment = true` | 见下「Mode B」 |
 
 ### Mode B：整段清洁，后切分
 
 ```matlab
 cfg.pipeline.cleanThenSegment = true;       % 启用 Mode B
-cfg.pipeline.modeB_rejectBadEpochs = true;  % 切分时剔除与 BAD_segment 重叠的段（默认 true）
+cfg.pipeline.modeB_badSegmentHandling = 'reject';  % 坏段处理：'reject'整段剔除 | 'keep'保留+标记 | 'trim'只删坏段区间（对齐参考实现）
 ```
 
 Mode B 流程：
 1. `step1b`：BDF → 整段连续 `.set`（保留全部事件）
 2. `step2b`：RELAX 清洁整段，坏段标记为 `BAD_segment` 事件（不删除）
-3. `step3b`：按 21/22 trigger 切分，剔除坏段，按 vid 写出
+3. `step3b`：按 21/22 trigger 切分，按 `modeB_badSegmentHandling` 处理坏段，按 vid 写出
 
 适用场景：需要整场共享伪迹模型（MWF/ICA 更充分）、或后续分析需要完整时间轴对齐。
+
+step3b 坏段处理三档对比：
+
+| 选项 | 行为 | 段长 | 数据利用率 |
+|---|---|---|---|
+| `'reject'`（默认） | 重叠即整段剔除 | 保持 trigger 间隔，跨被试一致 | 最低 |
+| `'keep'` | 整段保留 + `BAD_segment_overlap` 标记 | 保持 trigger 间隔 | 最高（下游自行裁决） |
+| `'trim'` | `eeg_eegrej` 只删坏段区间（与参考实现 MD 一致） | 变短，跨被试不一 | 中等 |
 
 ### 合并选项（对齐定稿 `merge_*_postrelax.m`）
 
@@ -148,9 +157,10 @@ output/
 **Mode B 关键特性**（已对齐参考实现的自定义策略）：
 - RELAX 清洁过程中，极端坏段/CRAP 段**不物理删除**，而是写入 `BAD_segment` 事件
 - **CRAP 合并**：开启 `RejCrap` 时，CRAP 标记段会合并进官方极端坏段标记（NaN mask + 待剔除列表），之后 MWF 模板屏蔽走官方流程
+- **CRAP 排除出检测统计**：与 CRAP 重叠的 epoch 不参与坏导/极端值检测的中位数/MAD/峰度/漂移等稳健统计（对齐参考实现的 `is_crap_epoch` 做法，避免巨大伪迹抬高检测阈值）
 - **copy-prune-back-copy**：wICA 前在删除坏段的**临时副本**上计算 ICA 权重，再复制回连续数据做 wICA——坏段不污染 ICA 分解（目前支持 `ICA_method='picard'`，其他方法会警告并回退）
 - 数据长度保持不变，事件时间轴与原始 BDF 一致
-- step3b 切分时，与 `BAD_segment` 重叠的视频段会被剔除（或标记，由 `cfg.pipeline.modeB_rejectBadEpochs` 控制）
+- step3b 切分时按 `cfg.pipeline.modeB_badSegmentHandling` 处理坏段：`'reject'` 整段剔除（默认）/ `'keep'` 保留+标记 / `'trim'` 只删坏段区间（与参考实现一致）
 - 多 BDF 逻辑自洽：整段读取时优先用 `evt.bdf` 事件，切分时用同一套 trigger 配对逻辑
 
 **结果影响会不会大？**  
@@ -228,6 +238,7 @@ EEG.RELAX_Metrics.Cleaned.*   % 清洁后（含 All_SER / All_ARR 等）
 | FieldTrip 20181205 | `external/fieldtrip-20181205/` |
 | RELAX v2 | `external/RELAX-RELAX-v2.0.0/` |
 | MWF / PrepPipeline / ICLabel / PICARD / FastICA / Biosig / Neuracle reader | `external/` 对应子目录 |
+| ERPLAB 12.20（可选；仅 `RejCrap` / `RejNontask` 需要） | `external/erplab12.20/` |
 | 电极 | `resources/standard_1005.elc` |
 
 **仍需自备：** 原始 EEG（`data/`，不入库）。没有数据时 `main` 无法端到端跑通，但依赖检查在 `setup` 即可完成。

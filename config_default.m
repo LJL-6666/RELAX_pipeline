@@ -56,6 +56,15 @@ cfg.relax.RejNontask = false;
 cfg.relax.minimum_break_length = 2000;
 cfg.relax.break_ignore_codes = setdiff(1:160, [60 61 62 63 64 65 66 67 142 143 144 145 160 200]);
 cfg.relax.break_buffer = 1500;
+% CRAP 连续伪迹检测（默认关闭，对齐定稿 FIXED；MD 参考实现开启）
+% 开启后：Mode A 物理删除 CRAP 段（官方行为）；Mode B 标记并合并进极端坏段
+cfg.relax.RejCrap = false;
+cfg.relax.crapChannels = 'all';     % 'all' 或 '1:32' 等
+cfg.relax.crapThreshold = 500;      % peak-to-peak 阈值（µV）
+cfg.relax.crapWindowSize = 1000;    % 检测窗长（ms）
+cfg.relax.crapWindowStep = 250;     % 窗步长（ms）
+cfg.relax.crapNumChanThreshold = 6; % 同时超阈值的通道数门槛（官方硬编码 6）
+cfg.relax.reject_short_periods = 1000; % 伪迹间短于此间隔（ms）的周期也剔除
 
 %% 合并选项（step3；对齐定稿 merge_*_postrelax.m 的行为）
 cfg.merge.padMissingVid     = false;  % 缺 vid 时是否用 NaN 段占位（需同时设 vidRange）
@@ -76,7 +85,13 @@ cfg.pipeline.skipExisting = true;
 cfg.pipeline.cleanThenSegment = false;
 % Mode B 专用输出目录（避免与 Mode A 混淆）
 cfg.pipeline.modeB_outputSuffix = '_modeB';
-% Mode B 切分时是否剔除 BAD_segment 覆盖的试次（true=剔除，false=保留但标记）
+% Mode B 坏段处理方式（三档）：
+%   'reject' = 与 BAD_segment 重叠的试次整段剔除（默认，段长保持 trigger 间隔）
+%   'keep'   = 整段保留 + 打 BAD_segment_overlap 标记（数据利用率最高，下游自行裁决）
+%   'trim'   = 与参考实现（MD）一致：eeg_eegrej 只删坏段区间（段变短，跨被试长度不一）
+cfg.pipeline.modeB_badSegmentHandling = 'reject';
+% 旧开关（向后兼容）：仅当未设置 modeB_badSegmentHandling 时生效
+% true -> 'reject'，false -> 'keep'
 cfg.pipeline.modeB_rejectBadEpochs = true;
 
 end
