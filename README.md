@@ -246,9 +246,14 @@ EEG.RELAX_Metrics.Cleaned.*   % 清洁后（含 All_SER / All_ARR 等）
 | EEGLAB 2025.1.0（含 firfilt / dipfit / ICLabel 等 plugins） | `external/eeglab2025.1.0/` |
 | FieldTrip 20181205 | `external/fieldtrip-20181205/` |
 | RELAX v2 | `external/RELAX-RELAX-v2.0.0/` |
-| MWF / PrepPipeline / ICLabel / PICARD / FastICA / Biosig / Neuracle reader | `external/` 对应子目录 |
+| MWF / PrepPipeline / PICARD / FastICA / Biosig / Neuracle reader | `external/` 对应子目录 |
+| ICLabel | `external/eeglab2025.1.0/plugins/ICLabel/`（此前 `external/ICLabel/` 的重复副本已删） |
 | ERPLAB 12.20（可选；仅 `RejCrap` / `RejNontask` 需要） | `external/erplab12.20/` |
 | 电极 | `resources/standard_1005.elc` |
+
+> **随仓库分发的工具箱做过裁剪**：与本流水线无关的大体量资源（SPM12 模板、解剖图谱、
+> dipfit 头模型、EGI MFF 读取器、示例数据、过时平台 mex 等）已移除，逐项见
+> [`THIRD_PARTY.md`](THIRD_PARTY.md)。如需源定位等功能，请从上游取完整工具箱覆盖到 `external/`。
 
 **仍需自备：** 原始 EEG（`data/`，不入库）。没有数据时 `main` 无法端到端跑通，但依赖检查在 `setup` 即可完成。
 
@@ -260,7 +265,7 @@ EEG.RELAX_Metrics.Cleaned.*   % 清洁后（含 All_SER / All_ARR 等）
 
 ## 仓库里有什么 / 没有什么
 
-**有：** 功能代码、原始参考、工具箱、README。  
+**有：** 功能代码、原始参考、工具箱（已裁剪，见 [`THIRD_PARTY.md`](THIRD_PARTY.md)）、README、`CITATION.cff`。  
 **无：** 原始 BDF / 海量 `.set`（请自备 `data/`）。`data/` 与大体量 `output/` 默认 gitignore。
 
 ---
