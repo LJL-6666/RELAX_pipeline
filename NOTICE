@@ -1,0 +1,10 @@
+NOTICE — 许可适用范围
+
+本仓库的 LICENSE（MIT）仅适用于自有代码：src/、main.m、setup.m、config_default.m、
+smoke_*.m 等。
+
+external/ 与 reference/ 下随仓库分发的第三方工具箱适用其各自的原许可，其中包含
+GPL 组件（EEGLAB、FieldTrip、RELAX、ERPLAB、Biosig 等）。因此本仓库整体的再分发
+受 GPL 条款约束。
+
+逐组件的版本、许可归属、本地改动与裁剪说明见 THIRD_PARTY.md。
