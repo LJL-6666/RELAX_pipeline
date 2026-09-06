@@ -120,7 +120,24 @@ function [EEG,wIC,A,W,IC] = RELAX_wICA_on_ICLabel_artifacts(EEG,varargin) % NWB 
     end
 
     % run ICA using "runica" or "radical"
-    if strcmp(type,'extended_infomax_ICA') % NWB altered label to increase clarity for the user
+    % Mode B addition: reuse precomputed ICA weights if present (copy-prune-back-copy).
+    % RELAX_Wrapper 的 MarkOnlyBadSegments 模式会先在删除坏段的临时副本上算好权重，
+    % 复制回连续数据；此处检测到合法权重则跳过内部 ICA，直接在连续数据上做 wICA。
+    if isfield(EEG, 'icaweights') && ~isempty(EEG.icaweights) ...
+            && isfield(EEG, 'icasphere') && ~isempty(EEG.icasphere) ...
+            && isfield(EEG, 'icachansind') && ~isempty(EEG.icachansind) ...
+            && size(EEG.icaweights, 2) == numel(EEG.icachansind)
+        OUTEEG = EEG;
+        OUTEEG = eeg_checkset(OUTEEG, 'ica');
+        W = OUTEEG.icaweights*OUTEEG.icasphere;
+        A = inv(W);
+        if isempty(OUTEEG.icaact)
+            OUTEEG.icaact = (OUTEEG.icaweights*OUTEEG.icasphere)*OUTEEG.data(OUTEEG.icachansind,:);
+            OUTEEG.icaact = reshape( OUTEEG.icaact, size(OUTEEG.icaact,1), OUTEEG.pnts, OUTEEG.trials);
+        end
+        IC=reshape(OUTEEG.icaact, size(OUTEEG.icaact,1), []);
+        fprintf('  [Mode B] 复用预计算 ICA 权重（跳过内部 ICA 分解）\n');
+    elseif strcmp(type,'extended_infomax_ICA') % NWB altered label to increase clarity for the user
         [OUTEEG, ~] = pop_runica_nwb(EEG, 'extended',1,'interupt','on'); %runica for parametric, default extended for finding subgaussian distributions
         W = OUTEEG.icaweights*OUTEEG.icasphere;
         A = inv(W);

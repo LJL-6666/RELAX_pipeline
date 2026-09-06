@@ -251,10 +251,10 @@ for FileNumber=RELAX_cfg.FilesToProcess(1,1:size(RELAX_cfg.FilesToProcess,2))
         end
         EEG.RELAXProcessingExtremeRejections.CRAPratio = CRAPpts/length(EEG.times);
         if RELAX_cfg.MarkOnlyBadSegments
-            % Mode B: 只标记 CRAP 段，不物理删除
-            EEG.RELAX.BadPeriodsBeforeDeletion = CRAPwin;
-            EEG.RELAX.OriginalDataLength = size(EEG.data, 2);
-            fprintf('  [Mode B] 标记 %d 个 CRAP 段（不删除）\n', size(CRAPwin, 1));
+            % Mode B（对齐参考实现）：CRAP 段不删除、不单独记录，
+            % 稍后合并进官方极端坏段标记（NaN mask + 待剔除列表），之后全走官方流程
+            EEG.RELAX.CRAPwinMarked = CRAPwin;
+            fprintf('  [Mode B] 标记 %d 个 CRAP 段（稍后合并进极端坏段标记）\n', size(CRAPwin, 1));
         else
             EEG = eeg_eegrej(EEG, EEG.CRAPwin);
         end
@@ -302,6 +302,32 @@ for FileNumber=RELAX_cfg.FilesToProcess(1,1:size(RELAX_cfg.FilesToProcess,2))
 
     [continuousEEG, epochedEEG] = RELAX_excluding_channels_and_epoching(continuousEEG, RELAX_cfg); % Epoch data, detect extremely bad data, delete channels if over the set threshold for proportion of data affected by extreme outlier for each electrode
     [continuousEEG, epochedEEG] = RELAX_excluding_extreme_values(continuousEEG, epochedEEG, RELAX_cfg); % Mark extreme periods for exclusion from MWF cleaning, and deletion before wICA cleaning
+
+    % Mode B（对齐参考实现）：把 CRAP 标记段合并进官方极端坏段标记，
+    % 之后 MWF 模板屏蔽 / ICA 前处理 / BAD_segment 事件写出都走同一套官方流程
+    if RELAX_cfg.MarkOnlyBadSegments && isfield(continuousEEG.RELAX, 'CRAPwinMarked') ...
+            && ~isempty(continuousEEG.RELAX.CRAPwinMarked)
+        crap = continuousEEG.RELAX.CRAPwinMarked;
+        % 1) 合并进 NaN mask（MWF 模板估计会忽略这些时间点）
+        if isfield(continuousEEG.RELAX, 'NaNsForExtremeOutlierPeriods') ...
+                && ~isempty(continuousEEG.RELAX.NaNsForExtremeOutlierPeriods)
+            for ci = 1:size(crap, 1)
+                a = max(1, crap(ci,1));
+                b = min(numel(continuousEEG.RELAX.NaNsForExtremeOutlierPeriods), crap(ci,2));
+                if a <= b
+                    continuousEEG.RELAX.NaNsForExtremeOutlierPeriods(a:b) = NaN;
+                end
+            end
+        end
+        % 2) 合并进待剔除列表（重叠区间合并）
+        if ~isfield(continuousEEG.RELAX, 'ExtremelyBadPeriodsForDeletion')
+            continuousEEG.RELAX.ExtremelyBadPeriodsForDeletion = [];
+        end
+        continuousEEG.RELAX.ExtremelyBadPeriodsForDeletion = RELAX_merge_bad_periods(...
+            [continuousEEG.RELAX.ExtremelyBadPeriodsForDeletion; crap], size(continuousEEG.data, 2));
+        fprintf('  [Mode B] 已将 %d 个 CRAP 段合并进极端坏段标记（合并后共 %d 段）\n', ...
+            size(crap, 1), size(continuousEEG.RELAX.ExtremelyBadPeriodsForDeletion, 1));
+    end
 
     if RELAX_cfg.PlotAfterExtremeRejection
        tmpBadPeriods = continuousEEG.RELAXProcessingExtremeRejections.ExtremelyBadPeriodsForDeletion;
@@ -671,6 +697,27 @@ for FileNumber=RELAX_cfg.FilesToProcess(1,1:size(RELAX_cfg.FilesToProcess,2))
         % marked as artifact by ICLabel.
         EEG.RELAXProcessing_wICA.aFileName=cellstr(FileName);
         try
+        % Mode B（对齐参考实现的 copy-prune-back-copy）：
+        % 连续数据不删坏段；先在删除坏段的临时副本上计算 ICA 权重，
+        % 再把权重复制回连续数据，由 RELAX_wICA_on_ICLabel_artifacts 直接使用
+        % （该函数检测到已有 icaweights 时跳过内部 ICA，避免坏段污染分解）。
+        if RELAX_cfg.MarkOnlyBadSegments && isfield(EEG.RELAX, 'ExtremelyBadPeriodsForDeletion') ...
+                && ~isempty(EEG.RELAX.ExtremelyBadPeriodsForDeletion)
+            if strcmp(RELAX_cfg.ICA_method, 'picard')
+                EEG_for_ICA = eeg_eegrej(EEG, EEG.RELAX.ExtremelyBadPeriodsForDeletion);
+                EEG_for_ICA = pop_runica_nwb(EEG_for_ICA, 'picard', 'mode','ortho','tol',1e-6,'maxiter',500);
+                EEG.icaweights  = EEG_for_ICA.icaweights;
+                EEG.icasphere   = EEG_for_ICA.icasphere;
+                EEG.icawinv     = EEG_for_ICA.icawinv;
+                EEG.icachansind = EEG_for_ICA.icachansind;
+                EEG.icaact = [];
+                fprintf('  [Mode B] ICA 权重在删除坏段的临时副本上计算（%d -> %d 点），已复制回连续数据\n', ...
+                    EEG.pnts, EEG_for_ICA.pnts);
+                clear EEG_for_ICA;
+            else
+                warning('[Mode B] copy-prune-back-copy 目前仅支持 ICA_method=''picard''，当前为 ''%s''，ICA 将在含坏段的连续数据上计算', RELAX_cfg.ICA_method);
+            end
+        end
         [EEG,~, ~, ~, ~] = RELAX_wICA_on_ICLabel_artifacts(EEG,RELAX_cfg.ICA_method, 1, 0, EEG.srate, 5,'coif5',RELAX_cfg.Report_all_ICA_info,RELAX_cfg.ICLabel_thresholds,RELAX_cfg.Clean_other_comps); 
         % pop_eegplot(EEG)
         % setting 'RELAX_cfg.Report_all_wICA_info' to 1 will report proportion of ICs categorized as each category, and variance explained by ICs from each category (function is ~20s slower if this is implemented)
@@ -1017,3 +1064,22 @@ toc
 % opposite sides of the head?
 % 2) adding a requirement that the IQR blink detection method detects that
 % positive amplitude shifts are biased towards frontal electrodes?
+
+%% Mode B helper: merge overlapping/adjacent bad-period intervals
+function periods = RELAX_merge_bad_periods(periods, nSamples)
+% 合并重叠/相邻的 [start end] 区间，并裁剪到 [1, nSamples]
+if isempty(periods)
+    return;
+end
+periods = sortrows(periods, 1);
+merged = periods(1, :);
+for i = 2:size(periods, 1)
+    if periods(i, 1) <= merged(end, 2) + 1
+        merged(end, 2) = max(merged(end, 2), periods(i, 2));
+    else
+        merged(end+1, :) = periods(i, :); %#ok<AGROW>
+    end
+end
+merged(:, 1) = max(1, merged(:, 1));
+merged(:, 2) = min(nSamples, merged(:, 2));
+periods = merged(merged(:, 2) > merged(:, 1), :);

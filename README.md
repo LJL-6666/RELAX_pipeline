@@ -145,8 +145,10 @@ output/
 | 坏段处理 | 清洁时物理删除，长度变短 | 清洁时只标记 `BAD_segment`，长度不变；切分时再剔除 |
 | 与定稿 / 当前仓 | 一致 | 新增可选模式 |
 
-**Mode B 关键特性**：
+**Mode B 关键特性**（已对齐参考实现的自定义策略）：
 - RELAX 清洁过程中，极端坏段/CRAP 段**不物理删除**，而是写入 `BAD_segment` 事件
+- **CRAP 合并**：开启 `RejCrap` 时，CRAP 标记段会合并进官方极端坏段标记（NaN mask + 待剔除列表），之后 MWF 模板屏蔽走官方流程
+- **copy-prune-back-copy**：wICA 前在删除坏段的**临时副本**上计算 ICA 权重，再复制回连续数据做 wICA——坏段不污染 ICA 分解（目前支持 `ICA_method='picard'`，其他方法会警告并回退）
 - 数据长度保持不变，事件时间轴与原始 BDF 一致
 - step3b 切分时，与 `BAD_segment` 重叠的视频段会被剔除（或标记，由 `cfg.pipeline.modeB_rejectBadEpochs` 控制）
 - 多 BDF 逻辑自洽：整段读取时优先用 `evt.bdf` 事件，切分时用同一套 trigger 配对逻辑
