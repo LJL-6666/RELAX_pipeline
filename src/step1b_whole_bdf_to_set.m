@@ -191,9 +191,13 @@ if isempty(events_in)
 end
 events_out = struct('type', {}, 'latency', {}, 'duration', {});
 for i = 1:numel(events_in)
-    ev = events_in(i);
+    if iscell(events_in)
+        ev = events_in{i};
+    else
+        ev = events_in(i);
+    end
     if ~isstruct(ev), continue; end
-    % type
+    % type（兼容 FieldTrip value 与 biosig eventvalue）
     if isfield(ev, 'value') && ~isempty(ev.value)
         v = ev.value;
         if isnumeric(v)
@@ -201,8 +205,17 @@ for i = 1:numel(events_in)
         else
             typeStr = char(string(v));
         end
+    elseif isfield(ev, 'eventvalue') && ~isempty(ev.eventvalue)
+        v = ev.eventvalue;
+        if isnumeric(v)
+            typeStr = num2str(v);
+        else
+            typeStr = char(string(v));
+        end
     elseif isfield(ev, 'type') && ~isempty(ev.type)
         typeStr = char(string(ev.type));
+    elseif isfield(ev, 'eventtype') && ~isempty(ev.eventtype)
+        typeStr = char(string(ev.eventtype));
     else
         typeStr = 'unknown';
     end

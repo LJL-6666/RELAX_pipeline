@@ -869,12 +869,21 @@ for FileNumber=RELAX_cfg.FilesToProcess(1,1:size(RELAX_cfg.FilesToProcess,2))
             if ~isfield(EEG.event, 'duration')
                 [EEG.event.duration] = deal([]);
             end
+            % 用现有事件做模板，保证字段完全一致（EEGLAB 可能带 urevent 等字段）
+            templateEv = EEG.event(end);
+            fn = fieldnames(templateEv);
             nBad = size(bad_periods, 1);
             for b = 1:nBad
-                ev = struct('type', 'BAD_segment', ...
-                            'latency', bad_periods(b,1), ...
-                            'duration', bad_periods(b,2) - bad_periods(b,1));
-                EEG.event(end+1) = ev;
+                ev = templateEv;
+                for f = 1:numel(fn)
+                    ev.(fn{f}) = [];
+                end
+                ev.type = 'BAD_segment';
+                ev.latency = bad_periods(b,1);
+                if isfield(ev, 'duration')
+                    ev.duration = bad_periods(b,2) - bad_periods(b,1);
+                end
+                EEG.event(end+1) = ev; %#ok<AGROW>
             end
             fprintf('  [Mode B] 已写入 %d 个 BAD_segment 事件\n', nBad);
         end
