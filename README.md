@@ -1,5 +1,14 @@
 # RELAX_pipeline
 
+<!-- cross-repo-nav -->
+> **本项目由四个仓库组成。** 主链路：
+> [`RELAX_pipeline`](https://github.com/LJL-6666/RELAX_pipeline) → [`daest-ty-preprocessing`](https://github.com/LJL-6666/daest-ty-preprocessing) → [`daest-ty-mainline`](https://github.com/LJL-6666/daest-ty-mainline)；
+> [`mTRF_pipeline`](https://github.com/LJL-6666/mTRF_pipeline) 为并行的语音包络—EEG 分析线。
+>
+> 当前仓库：**`RELAX_pipeline`** —— BDF → 按视频分段 → RELAX 伪迹清洁 → 按被试合并
+<!-- /cross-repo-nav -->
+
+
 MATLAB 端到端 **EEG 自动去伪迹** 流水线：Neuracle BDF → 按视频编号对齐的 `.set` → **RELAX v2** 清洁 → 按被试合并，并输出 SER/ARR 等质量指标。
 
 本仓库**同时包含**：
@@ -281,6 +290,7 @@ A: 有。优先看 `RawMetrics` / `CleanedMetrics` 里的 SER、ARR、眨眼比�
 ## 许可证与引用
 
 - 本仓库功能流水线与整理脚本：MIT（见 `LICENSE`），不含改写官方算法版权声明。  
+- **逐组件许可、本地改动与裁剪说明见 [`THIRD_PARTY.md`](THIRD_PARTY.md)。**由于 `external/` 含 GPL 组件，本仓库**整体再分发受 GPL 条款约束**。  
 - RELAX：见 `external/RELAX-RELAX-v2.0.0` / 论文要求引用 Bailey et al. 2023（及所用 targeted wICA 时 2024 preprint）。  
 - EEGLAB / FieldTrip / 其他第三方：遵守各自许可证（FieldTrip 等为 GPL 组件时，整体再分发请合规）。
 

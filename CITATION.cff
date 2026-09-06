@@ -1,0 +1,18 @@
+cff-version: 1.2.0
+title: "RELAX_pipeline · Neuracle BDF 到 RELAX 清洁的可迁移 EEG 流水线"
+message: "若使用本仓库的代码，请引用本仓库，并同时引用 RELAX、EEGLAB、FieldTrip 等被实际调用的方法（见 THIRD_PARTY.md）。"
+type: software
+authors:
+  - family-names: "刘"
+    given-names: "嘉玲"
+    alias: LJL-6666
+repository-code: "https://github.com/LJL-6666/RELAX_pipeline"
+abstract: >-
+  MATLAB 端到端 EEG 自动去伪迹流水线：Neuracle BDF → 按视频编号对齐的 .set →
+  RELAX v2 清洁 → 按被试合并，并输出 SER/ARR 等质量指标。提供 Mode A（先切后清洁）
+  与 Mode B（先清洁后切）两条路径。仓库自有代码为 MIT；随附于 external/ 的第三方
+  工具箱适用各自原许可（含 GPL 组件），逐项说明见 THIRD_PARTY.md。
+license:
+  - MIT
+  - GPL-3.0-or-later
+date-released: "2026-09-06"
