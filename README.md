@@ -19,6 +19,14 @@ MATLAB 端到端 **EEG 自动去伪迹** 流水线：Neuracle BDF → 按视频�
 | 2 | `step2_relax_clean` | 批处理调用官方 `RELAX_Wrapper`（滤波、坏道、MWF×3、极端段处理、ICA/wICA、指标） |
 | 3 | `step3_merge_subjects` | 同被试各 vid 合并为 `subXXX_RELAX_merged.set`（可选缺 vid NaN 占位、vid 标记事件） |
 
+**Mode B（整段清洁，后切分）**：设 `cfg.pipeline.cleanThenSegment = true` 后，流程变为：
+
+| 步骤 | 功能流水线 | 做什么 |
+|---|---|---|
+| 1B | `step1b_whole_bdf_to_set` | 读 BDF 为整段连续 `.set`，保留全部事件（含 21/22 trigger） |
+| 2B | `step2b_relax_clean_whole` | RELAX 清洁整段数据，**只标记坏段为 `BAD_segment` 事件，不物理删除** |
+| 3B | `step3b_epoch_after_relax` | 按 21/22 trigger 切分，剔除与 `BAD_segment` 重叠的段，按 vid 写出 |
+
 默认滤波 1–47 Hz、工频 50 Hz、降采样 250 Hz；极端坏段为官方 **删除** 行为。若需等长时间轴，使用 `reference/experiment1/code1`（或 `src/utils`）中的 `restore_deleted_periods_*.m`。
 
 ---
@@ -62,6 +70,21 @@ cfg.task.folderName = '电影';   % 或 '交流'
 | 采样率/滤波不同 | `cfg.relax.DownSample_to_X_Hz`、`HighPassFilter`、`LowPassFilter`、`LineNoiseFrequency` | 欧标 50 Hz → 60 Hz 改 `LineNoiseFrequency = 60` |
 | 合并时要和定稿一致（缺 vid 补 NaN、保留 vid 事件） | `cfg.merge.*` | 见下 |
 | 剔除任务外长休息段 | `cfg.relax.RejNontask = true` 及 `minimum_break_length` / `break_ignore_codes` / `break_buffer` | 默认关闭 |
+| 启用整段清洁模式（Mode B） | `cfg.pipeline.cleanThenSegment = true` | 见下「Mode B」 |
+
+### Mode B：整段清洁，后切分
+
+```matlab
+cfg.pipeline.cleanThenSegment = true;       % 启用 Mode B
+cfg.pipeline.modeB_rejectBadEpochs = true;  % 切分时剔除与 BAD_segment 重叠的段（默认 true）
+```
+
+Mode B 流程：
+1. `step1b`：BDF → 整段连续 `.set`（保留全部事件）
+2. `step2b`：RELAX 清洁整段，坏段标记为 `BAD_segment` 事件（不删除）
+3. `step3b`：按 21/22 trigger 切分，剔除坏段，按 vid 写出
+
+适用场景：需要整场共享伪迹模型（MWF/ICA 更充分）、或后续分析需要完整时间轴对齐。
 
 ### 合并选项（对齐定稿 `merge_*_postrelax.m`）
 
@@ -88,6 +111,8 @@ cfg.merge.method            = 'concat'; % 定稿脚本的手工拼接方式
 
 ### 输出
 
+**Mode A（默认，先切再清洁）：**
+
 ```text
 output/
   set_by_vid/<task>/           % step1
@@ -95,20 +120,36 @@ output/
   merged/<task>/               % step3
 ```
 
+**Mode B（整段清洁，后切分）：**
+
+```text
+output/
+  set_whole/<task>/                % step1b：整段连续 set
+  relax_whole/<task>/RELAXProcessed/ % step2b：Cleaned_Data（含 BAD_segment 事件）+ metrics
+  epochs_by_vid/<task>/            % step3b：按 vid 切分后的 set
+```
+
 ---
 
 ## 先切再清洁 vs 先清洁再切：结果影响大吗？
 
 本仓库**默认是 A：先按 vid 切开，再对每个短连续段跑 RELAX**（与定稿 `*_FIXED.m` 一致）。  
-论文更贴近的是 **B：整场连续清洁，再按事件切段**（本仓尚未作为第二模式实现）。
+**Mode B（先清洁再切）已实现**：设 `cfg.pipeline.cleanThenSegment = true` 即可启用。
 
-| | A 先切再清洁（默认） | B 先清洁再切（论文更贴近） |
+| | A 先切再清洁（默认） | B 先清洁再切（Mode B） |
 |---|---|---|
 | 清洁上下文 | 单个 vid（短） | 整场（长） |
 | 伪迹模型 | 各段独立 | 整场共享 |
 | MWF / ICA | 短段可能略不稳 | 通常更充分 |
 | 刺激隔离 | 强 | 弱（可能互相影响） |
-| 与定稿 / 当前仓 | 一致 | 需另做模式 |
+| 坏段处理 | 清洁时物理删除，长度变短 | 清洁时只标记 `BAD_segment`，长度不变；切分时再剔除 |
+| 与定稿 / 当前仓 | 一致 | 新增可选模式 |
+
+**Mode B 关键特性**：
+- RELAX 清洁过程中，极端坏段/CRAP 段**不物理删除**，而是写入 `BAD_segment` 事件
+- 数据长度保持不变，事件时间轴与原始 BDF 一致
+- step3b 切分时，与 `BAD_segment` 重叠的视频段会被剔除（或标记，由 `cfg.pipeline.modeB_rejectBadEpochs` 控制）
+- 多 BDF 逻辑自洽：整段读取时优先用 `evt.bdf` 事件，切分时用同一套 trigger 配对逻辑
 
 **结果影响会不会大？**  
 会有差别，有时还不小：同一被试同一视频，波形、删段后长度、眨眼/肌电残留、SER/ARR 都可以不同。  

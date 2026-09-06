@@ -82,6 +82,11 @@ else
     RELAX_cfg.SingleFile = 0; % 0 for multiple files
 end
 
+% Mode B: mark-only mode (do not physically delete bad segments, write BAD_segment events instead)
+if ~isfield(RELAX_cfg, 'MarkOnlyBadSegments') || isempty(RELAX_cfg.MarkOnlyBadSegments)
+    RELAX_cfg.MarkOnlyBadSegments = 0;
+end
+
 WarningAboutFileNumber=0;
 if size(RELAX_cfg.FilesToProcess,2) > size(RELAX_cfg.files,2)
     RELAX_cfg.FilesToProcess=RELAX_cfg.FilesToProcess(1,1):size(RELAX_cfg.files,2);
@@ -245,7 +250,14 @@ for FileNumber=RELAX_cfg.FilesToProcess(1,1:size(RELAX_cfg.FilesToProcess,2))
             end
         end
         EEG.RELAXProcessingExtremeRejections.CRAPratio = CRAPpts/length(EEG.times);
-        EEG = eeg_eegrej(EEG, EEG.CRAPwin);
+        if RELAX_cfg.MarkOnlyBadSegments
+            % Mode B: 只标记 CRAP 段，不物理删除
+            EEG.RELAX.BadPeriodsBeforeDeletion = CRAPwin;
+            EEG.RELAX.OriginalDataLength = size(EEG.data, 2);
+            fprintf('  [Mode B] 标记 %d 个 CRAP 段（不删除）\n', size(CRAPwin, 1));
+        else
+            EEG = eeg_eegrej(EEG, EEG.CRAPwin);
+        end
 
         % Skip subjects that have more than 20% CRAP area
         if EEG.RELAXProcessingExtremeRejections.CRAPratio >= 0.2
@@ -609,15 +621,20 @@ for FileNumber=RELAX_cfg.FilesToProcess(1,1:size(RELAX_cfg.FilesToProcess,2))
     if ~isempty(EEG.RELAX.ExtremelyBadPeriodsForDeletion)
         EEG.RELAX.OriginalDataLength = size(EEG.data, 2);  % 保存原始数据长度
         EEG.RELAX.BadPeriodsBeforeDeletion = EEG.RELAX.ExtremelyBadPeriodsForDeletion;  % 保存坏段位置
-        fprintf('  删除 %d 个极端坏段（保存位置信息用于最后恢复）\n', size(EEG.RELAX.ExtremelyBadPeriodsForDeletion, 1));
+        fprintf('  标记 %d 个极端坏段（保存位置信息用于最后恢复）\n', size(EEG.RELAX.ExtremelyBadPeriodsForDeletion, 1));
     end
 
-    % 使用原始的删除方法（这样ICA等算法不受NaN影响）
-    EEG = eeg_eegrej( EEG, EEG.RELAX.ExtremelyBadPeriodsForDeletion);
+    if RELAX_cfg.MarkOnlyBadSegments
+        % Mode B: 不物理删除，仅记录；后续保存时写入 BAD_segment 事件
+        fprintf('  [Mode B] 极端坏段仅标记，不删除\n');
+    else
+        % 使用原始的删除方法（这样ICA等算法不受NaN影响）
+        EEG = eeg_eegrej( EEG, EEG.RELAX.ExtremelyBadPeriodsForDeletion);
 
-    % 同时也删除rawEEG中的坏段，保持长度一致（用于后续指标计算）
-    if exist('rawEEG', 'var') && ~isempty(EEG.RELAX.ExtremelyBadPeriodsForDeletion)
-        rawEEG = eeg_eegrej( rawEEG, EEG.RELAX.BadPeriodsBeforeDeletion);
+        % 同时也删除rawEEG中的坏段，保持长度一致（用于后续指标计算）
+        if exist('rawEEG', 'var') && ~isempty(EEG.RELAX.ExtremelyBadPeriodsForDeletion)
+            rawEEG = eeg_eegrej( rawEEG, EEG.RELAX.BadPeriodsBeforeDeletion);
+        end
     end
 
     if strcmp(RELAX_cfg.LowPassFilterBeforeMWF,'no') % if low pass filtering wasn't applied before MWF cleaning (recommended) apply it here
@@ -793,6 +810,30 @@ for FileNumber=RELAX_cfg.FilesToProcess(1,1:size(RELAX_cfg.FilesToProcess,2))
     end
     SaveSet_CleanedFile =[RELAX_cfg.myPath,filesep 'RELAXProcessed' filesep 'Cleaned_Data', filesep FileName '_RELAX.set'];  
     EEG.RELAX_settings_used_to_clean_this_file=RELAX_cfg;
+
+    %% Mode B: write BAD_segment events instead of deleting
+    if RELAX_cfg.MarkOnlyBadSegments
+        if isfield(EEG.RELAX, 'BadPeriodsBeforeDeletion') && ~isempty(EEG.RELAX.BadPeriodsBeforeDeletion)
+            bad_periods = EEG.RELAX.BadPeriodsBeforeDeletion;
+            % 确保 event 字段存在
+            if ~isfield(EEG, 'event') || isempty(EEG.event)
+                EEG.event = struct('type', {}, 'latency', {}, 'duration', {});
+            end
+            if ~isfield(EEG.event, 'duration')
+                [EEG.event.duration] = deal([]);
+            end
+            nBad = size(bad_periods, 1);
+            for b = 1:nBad
+                ev = struct('type', 'BAD_segment', ...
+                            'latency', bad_periods(b,1), ...
+                            'duration', bad_periods(b,2) - bad_periods(b,1));
+                EEG.event(end+1) = ev;
+            end
+            fprintf('  [Mode B] 已写入 %d 个 BAD_segment 事件\n', nBad);
+        end
+        % 跳过 NaN 还原（Mode B 不删除，无需还原）
+        RELAX_cfg.RestoreDeletedPeriodsAsNaN = 0;
+    end
 
     %% Optional: restore deleted extreme periods as NaN (OFF by default = official delete)
     % 官方 RELAX 删除极端坏段后直接保存。等长 NaN 还原默认关闭，避免长度不一致时崩溃；

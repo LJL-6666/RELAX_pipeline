@@ -70,4 +70,13 @@ cfg.pipeline.doStep2 = true;
 cfg.pipeline.doStep3 = true;
 cfg.pipeline.skipExisting = true;
 
+%% 方案 B：整段清洁，后切分（clean-then-segment）
+% 设为 true 时启用 Mode B：step1 不切段直接转整段 set，RELAX 只标记坏段不删除，
+% step3 按 BAD_segment 事件 + 21/22 trigger 切分并剔除坏段。
+cfg.pipeline.cleanThenSegment = false;
+% Mode B 专用输出目录（避免与 Mode A 混淆）
+cfg.pipeline.modeB_outputSuffix = '_modeB';
+% Mode B 切分时是否剔除 BAD_segment 覆盖的试次（true=剔除，false=保留但标记）
+cfg.pipeline.modeB_rejectBadEpochs = true;
+
 end
